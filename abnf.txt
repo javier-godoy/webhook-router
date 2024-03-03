@@ -1,0 +1,29 @@
+# configuration = or-sequence 
+#
+# or-sequence  = and-sequence *(1*CRLF (otherwise-directive / and-sequence)
+# and-sequence = *(directive CRLF)
+#
+# directive = ["NOT"] predicate / action / group-directive / or-directive
+# group-directive = "{" or-sequence "}"
+# 
+# predicate =  <header> ":" <value>
+#           / "$" <json-path> ":" <value>
+#
+# action = "DROP"
+#        / "DRY"
+#        / "EXIT"
+#        / "LOG" <macro-string> ["&&"]; double ampersand in macro-string must be escaped
+#        / "POST" <macro-string>; must expand to an absolute-URI
+#        / "FOR" <variable> "IN" "$" <json-path> <group-directive>
+#        / "REENTER [COPY]"
+#        / "SET" <header> ":" <macro-string>
+#
+#
+# or-directive        = "or" "{" 1*(directive CRLF) "}"
+# otherwise-directive = "otherwise" directive
+#
+# macro-string     = *( macro-expand / macro-literal / macro-escape)
+# macro-expand     = ( "${" macro-expansion "}" )
+# macro-escape     = "\\" / "\#" / "\$" / "\&"
+# macro-literal    = %x20-22 / %x25-5B / %x5D-7E; space and visible characters except "#", "$", "\"
+# macro-expansion  = 1*(ALPHA / DIGIT / "-" / "_" / ".")
