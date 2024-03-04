@@ -6,7 +6,7 @@
 
   <groupId>ar.com.rjgodoy.webhook_router</groupId>
   <artifactId>webhook-router</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
 
   <name>webhook-router</name>
   <description>A simple webhook-router.</description>
