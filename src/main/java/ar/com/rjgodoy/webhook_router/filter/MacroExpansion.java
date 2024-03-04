@@ -26,6 +26,9 @@ final class MacroExpansion implements MacroStringPart {
 
   @Override
   public String eval(WebHook webhook, boolean coerce) {
+    if (expansion.startsWith("env.")) {
+      return System.getenv(expansion.substring(4));
+    }
     if (!expansion.contains(".")) {
       Object value = webhook.context.get(expansion);
       if (value != null) {

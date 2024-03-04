@@ -119,6 +119,9 @@ LOG ${X-GitHub-Delivery}
 
 # A macro string with a single macro expansion that resolves to the payload element "repository.full_name"
 LOG ${repository.full_name}
+
+# A macro string with a single macro expansion that resolves to the HOSTNAME environment variable
+LOG ${env.HOSTNAME}
 ```
 
 #### POST action
