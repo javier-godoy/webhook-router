@@ -31,15 +31,13 @@ final class OrSequence extends LogicalDirective {
   private final List<Directive> directives;
 
   @Override
-  public boolean apply(WebHook webhook) {
-    boolean result = false;
+  public Result apply(WebHook webhook) {
+    Result result = Result.NULL;
     for (Directive directive : directives) {
-      if (result && directive instanceof OtherwiseDirective) {
+      if (result == Result.TRUE && directive instanceof OtherwiseDirective) {
         continue;
       }
-      if (eval(directive, webhook, true)) {
-        result = true;
-      }
+      result = result.or(directive.apply(webhook));
     }
     return result;
   }

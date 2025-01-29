@@ -31,13 +31,15 @@ final class AndSequence extends LogicalDirective {
   private final List<Directive> directives;
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
+    Result result = Result.NULL;
     for (Directive directive : directives) {
-      if (eval(directive, webhook, false)) {
-        return false;
+      result = result.and(directive.apply(webhook));
+      if (result == Result.FALSE) {
+        break;
       }
     }
-    return true;
+    return result;
   }
 
   @Override

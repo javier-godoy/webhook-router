@@ -24,8 +24,8 @@ final class Not implements Directive {
   private final Directive directive;
 
   @Override
-  public boolean apply(WebHook webhook) {
-    return !directive.apply(webhook);
+  public Result apply(WebHook webhook) {
+    return directive.apply(webhook).negate();
   }
 
 }

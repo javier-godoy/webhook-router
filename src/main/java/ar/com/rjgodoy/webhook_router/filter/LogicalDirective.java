@@ -15,17 +15,6 @@
  */
 package ar.com.rjgodoy.webhook_router.filter;
 
-import ar.com.rjgodoy.webhook_router.WebHook;
-
 public abstract class LogicalDirective implements Directive {
-
-  protected final boolean eval(Directive d, WebHook webhook, boolean expect) {
-    if (d.isIgnoreResult()) {
-      d.apply(webhook);
-      return false;
-    } else {
-      return d.apply(webhook) == expect;
-    }
-  }
 
 }

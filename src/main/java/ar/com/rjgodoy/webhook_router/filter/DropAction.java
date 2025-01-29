@@ -22,14 +22,9 @@ import lombok.EqualsAndHashCode;
 final class DropAction implements Directive {
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     webhook.context.consume();
-    return true;
-  }
-
-  @Override
-  public boolean isIgnoreResult() {
-    return true;
+    return Result.NULL;
   }
 
   @Override

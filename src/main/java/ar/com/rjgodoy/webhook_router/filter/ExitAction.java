@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 final class ExitAction implements Directive {
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     throw new ExitActionException();
   }
 

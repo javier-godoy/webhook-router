@@ -31,13 +31,15 @@ final class OrDirective extends LogicalDirective {
   private final List<Directive> directives;
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
+    Result result = Result.NULL;
     for (Directive directive : directives) {
-      if (eval(directive, webhook, true)) {
-        return true;
+      result = result.or(directive.apply(webhook));
+      if (result == Result.TRUE) {
+        break;
       }
     }
-    return false;
+    return result;
   }
 
   @Override

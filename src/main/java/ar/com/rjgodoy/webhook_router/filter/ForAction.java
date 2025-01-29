@@ -32,12 +32,12 @@ final class ForAction implements Directive {
   private final Directive body;
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     Object obj = webhook.getPayload(arrayName);
     if (obj instanceof JSONArray array) {
       int n = array.length();
       if (n == 0) {
-        return false;
+        return Result.FALSE;
       }
       for (int i = 0; i < n; i++) {
         WebHook copy = new WebHook(webhook);
@@ -48,10 +48,10 @@ final class ForAction implements Directive {
           // done
         }
       }
-      return true;
+      return Result.TRUE;
     } else {
       System.err.println("[FOR] " + arrayName + " is not an array");
-      return false;
+      return Result.FALSE;
     }
   }
 

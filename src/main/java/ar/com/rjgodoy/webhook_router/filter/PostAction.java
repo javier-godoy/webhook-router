@@ -40,34 +40,34 @@ final class PostAction implements Directive {
   private final MacroString macro;
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     String location = macro.eval(webhook, false);
     if (location == null) {
       System.err.println("[POST] Macro expanded to null: " + macro);
-      return false;
+      return Result.FALSE;
     }
     URI uri;
     try {
       uri = new URI(location);
     } catch (URISyntaxException e) {
       System.err.println("[POST] URISyntaxException " + e.getMessage());
-      return false;
+      return Result.FALSE;
     }
     if (!uri.isAbsolute()) {
       System.err.println("[POST] URI must be absolute");
-      return false;
+      return Result.FALSE;
     }
     if (!uri.getScheme().equals("http") && !uri.getScheme().equals("https")) {
       System.err.println("[POST] URI scheme must be either http or https");
-      return false;
+      return Result.FALSE;
     }
     if (!webhook.context.isDry()) {
       if (!post(uri, webhook)) {
-        return false;
+        return Result.FALSE;
       }
     }
     webhook.context.consume();
-    return true;
+    return Result.TRUE;
   }
 
   private boolean post(URI uri, WebHook webhook) {

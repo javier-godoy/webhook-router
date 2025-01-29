@@ -19,9 +19,6 @@ import ar.com.rjgodoy.webhook_router.WebHook;
 
 public interface Directive {
 
-  public boolean apply(WebHook webhook);
+  public Result apply(WebHook webhook);
 
-  default boolean isIgnoreResult() {
-    return false;
-  }
 }

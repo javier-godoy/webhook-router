@@ -30,8 +30,8 @@ final class PayloadPredicate implements Directive {
   private final String value;
 
   @Override
-  public boolean apply(WebHook webhook) {
-    return Objects.equals(webhook.getPayload(path), value);
+  public Result apply(WebHook webhook) {
+    return Result.of(Objects.equals(webhook.getPayload(path), value));
   }
 
   @Override

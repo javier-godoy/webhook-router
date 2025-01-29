@@ -30,8 +30,8 @@ final class HeaderPredicate implements Directive {
   private final String value;
 
   @Override
-  public boolean apply(WebHook webhook) {
-    return webhook.getHeader(name).filter(value::equals).isPresent();
+  public Result apply(WebHook webhook) {
+    return Result.of(webhook.getHeader(name).filter(value::equals).isPresent());
   }
 
   @Override

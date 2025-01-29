@@ -27,7 +27,7 @@ final class ReenterAction implements Directive {
   private final boolean copy;
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     if (copy) {
       webhook = new WebHook(webhook);
     }
@@ -35,7 +35,7 @@ final class ReenterAction implements Directive {
     try {
       if (!webhook.context.reenter(webhook, this)) {
         System.err.println("[REENTER] Loop detected");
-        return false;
+        return Result.FALSE;
       }
     } catch (ExitActionException e) {
       if (!copy) {
@@ -43,7 +43,7 @@ final class ReenterAction implements Directive {
       }
     }
 
-    return webhook.context.isConsumed();
+    return Result.of(webhook.context.isConsumed());
   }
 
   @Override

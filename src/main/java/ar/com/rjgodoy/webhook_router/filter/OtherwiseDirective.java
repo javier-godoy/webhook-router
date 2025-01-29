@@ -29,12 +29,7 @@ final class OtherwiseDirective implements Directive {
   private final Directive directive;
 
   @Override
-  public boolean isIgnoreResult() {
-    return directive.isIgnoreResult();
-  }
-
-  @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     return directive.apply(webhook);
   }
 

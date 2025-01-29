@@ -47,12 +47,7 @@ class LogAction implements Directive {
   }
 
   @Override
-  public boolean isIgnoreResult() {
-    return next == null || next.isIgnoreResult();
-  }
-
-  @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     String s = macro.eval(webhook, true);
     if (s != null) {
       for (String secret : webhook.context.getSecrets().toList()) {
@@ -66,7 +61,7 @@ class LogAction implements Directive {
     if (next != null) {
       return next.apply(webhook);
     } else {
-      return true;
+      return Result.NULL;
     }
   }
 

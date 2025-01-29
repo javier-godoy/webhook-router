@@ -170,7 +170,6 @@ public class ParserTest {
     assertThat(dd.get(0), isADropAction());
     assertThat(dd.get(1), is(parser("otherwise drop").scanOtherwise()));
     assertThat(dd.get(2), isADropAction());
-    assertFalse(d.isIgnoreResult());
   }
 
   @Test
@@ -185,13 +184,6 @@ public class ParserTest {
   public void testScanOtherwise() {
     var d = parser("otherwise post x").scanOtherwise();
     assertThat(d.getDirective(), isA(PostAction.class.asSubclass(Directive.class)));
-    assertFalse(d.isIgnoreResult());
-  }
-
-  @Test
-  public void testScanOtherwiseIgnore() {
-    var d = parser("otherwise drop").scanOtherwise();
-    assertTrue(d.isIgnoreResult());
   }
 
   @Test
@@ -274,7 +266,6 @@ public class ParserTest {
     assertThat(parts, hasSize(1));
     assertThat(parts.get(0), is(new MacroExpansion("x")));
     assertThat(parser(line).scanDirective(), is(d));
-    assertTrue(d.isIgnoreResult());
   }
 
   @Test
@@ -284,7 +275,6 @@ public class ParserTest {
     assertThat(d, isA(LogAction.class.asSubclass(Directive.class)));
     assertThat(((LogAction) d).getMacro().toString(), is("x POST ${y}"));
     assertThat(((LogAction) d).getNext(), is(parser("POST ${y}").scanAction()));
-    assertFalse(d.isIgnoreResult());
   }
 
   @Test
@@ -294,7 +284,6 @@ public class ParserTest {
     assertThat(d, isA(LogAction.class.asSubclass(Directive.class)));
     assertThat(((LogAction) d).getMacro().toString(), is("x\\&&y POST w&&z"));
     assertThat(((LogAction) d).getNext(), is(parser("POST w&&z").scanAction()));
-    assertFalse(d.isIgnoreResult());
   }
 
   @Test
@@ -304,7 +293,6 @@ public class ParserTest {
     assertThat(d, isA(LogAction.class.asSubclass(Directive.class)));
     assertThat(((LogAction) d).getMacro().toString(), is("x LOG ${y}"));
     assertThat(((LogAction) d).getNext(), is(parser("LOG ${y}").scanAction()));
-    assertTrue(d.isIgnoreResult());
   }
 
   @Test

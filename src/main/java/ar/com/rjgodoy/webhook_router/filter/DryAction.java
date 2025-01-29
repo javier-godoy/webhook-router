@@ -24,14 +24,9 @@ import lombok.RequiredArgsConstructor;
 final class DryAction implements Directive {
 
   @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     webhook.context.dry();
-    return true;
-  }
-
-  @Override
-  public boolean isIgnoreResult() {
-    return true;
+    return Result.NULL;
   }
 
   @Override

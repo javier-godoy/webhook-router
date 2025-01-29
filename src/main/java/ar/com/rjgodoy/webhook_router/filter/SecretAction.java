@@ -30,19 +30,14 @@ class SecretAction implements Directive {
   private final MacroString macro;
 
   @Override
-  public boolean isIgnoreResult() {
-    return true;
-  }
-
-  @Override
-  public boolean apply(WebHook webhook) {
+  public Result apply(WebHook webhook) {
     String s = macro.eval(webhook, true);
     if (s != null) {
       webhook.context.addSecret(s);
     } else {
       System.err.println("[SECRET] Macro expanded to null: " + macro);
     }
-    return true;
+    return Result.NULL;
   }
 
   @Override
