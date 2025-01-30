@@ -59,10 +59,10 @@ public class WebHook {
     JSONObject obj = payload;
     int n = ss.length - 1;
     for (int i = 0; i < n; i++) {
-      if (!payload.has(ss[i])) {
+      if (!obj.has(ss[i])) {
         return null;
       }
-      obj = payload.getJSONObject(ss[i]);
+      obj = obj.getJSONObject(ss[i]);
     }
     if (!obj.has(ss[n])) {
       return null;
