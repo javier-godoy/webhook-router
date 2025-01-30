@@ -123,6 +123,22 @@ LOG ${repository.full_name}
 # A macro string with a single macro expansion that resolves to the HOSTNAME environment variable
 LOG ${env.HOSTNAME}
 ```
+#### PROCEDURE declaration
+
+A `PROCEDURE` declaration introduces a new procedure within the scope of an or sequence.
+
+```
+CALL foo
+
+PROCEDURE foo {
+   LOG foo
+}
+```
+
+#### CALL action
+
+The `CALL` action executes a named procedure and returns its result. 
+This action returns `false` if the procedure does not exist.
 
 #### POST action
 ```

@@ -18,6 +18,7 @@ package ar.com.rjgodoy.webhook_router.filter;
 import ar.com.rjgodoy.webhook_router.WebHook;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -32,6 +33,8 @@ final class OrSequence extends LogicalDirective {
 
   @Override
   public Result apply(WebHook webhook) {
+    procedures().forEach(webhook.context::declare);
+
     Result result = Result.NULL;
     for (Directive directive : directives) {
       if (result == Result.TRUE && directive instanceof OtherwiseDirective) {
@@ -39,13 +42,24 @@ final class OrSequence extends LogicalDirective {
       }
       result = result.or(directive.apply(webhook));
     }
+
+    procedures().forEach(webhook.context::undeclare);
     return result;
+  }
+
+  private Stream<ProcedureDecl> procedures() {
+    return directives.stream().filter(ProcedureDecl.class::isInstance)
+        .map(ProcedureDecl.class::cast);
   }
 
   @Override
   public String toString() {
     String s = directives.stream().map(Object::toString).collect(Collectors.joining("\n\n"));
-    return "{\n  " + ToStringHelper.pad(s) + "\n}";
+    if (s.isEmpty()) {
+      return "{}";
+    } else {
+      return "{\n  " + ToStringHelper.pad(s) + "\n}";
+    }
   }
 
 }

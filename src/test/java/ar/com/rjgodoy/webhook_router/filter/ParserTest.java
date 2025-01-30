@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import ar.com.rjgodoy.webhook_router.Header;
 import java.util.Arrays;
+import java.util.List;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -506,6 +507,27 @@ public class ParserTest {
     assertThat(assertThrows(RuntimeParserException.class, () -> {
       parser("").parseMacroString();
     }).getMessage(), containsString("Expected macro-string;"));
+  }
+
+  @Test
+  public void testProcedure() {
+    var d = parser("procedure foo {}").scanProcedureDecl();
+    assertThat(d, isA(ProcedureDecl.class.asSubclass(Directive.class)));
+    assertThat(d, is(new ProcedureDecl("foo", new OrSequence(List.of()))));
+  }
+
+  @Test
+  public void testProcedureIncomplete() {
+    assertThat(assertThrows(RuntimeParserException.class, () -> {
+      parser("procedure foo").scanProcedureDecl();
+    }).getMessage(), containsString("Expected procedure body;"));
+  }
+
+  @Test
+  public void testCall() {
+    var d = parser("call foo").scanAction();
+    assertThat(d, isA(CallAction.class.asSubclass(Directive.class)));
+    assertThat(d, is(new CallAction("foo")));
   }
 
 }

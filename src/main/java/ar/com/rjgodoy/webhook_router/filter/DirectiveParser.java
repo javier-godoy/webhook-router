@@ -156,7 +156,8 @@ public class DirectiveParser {
   Directive parseOrSequence() {
     int lineNumber = this.lineNumber;
     try {
-      // or-sequence = and-sequence *(1*CRLF (otherwise-directive / and-sequence)
+      // or-sequence = and-sequence/procedure-decl *(1*CRLF (otherwise-directive / and-sequence /
+      // procedure-decl))
       List<Directive> directives = new ArrayList<>();
       Directive otherwise;
 
@@ -172,6 +173,12 @@ public class DirectiveParser {
         otherwise = scanOtherwise();
         if (otherwise != null) {
           directives.add(otherwise);
+          continue;
+        }
+
+        Directive procedure = scanProcedureDecl();
+        if (procedure != null) {
+          directives.add(procedure);
           continue;
         }
 
@@ -307,6 +314,10 @@ public class DirectiveParser {
   }
 
   Directive scanGroup() {
+    return scanGroup(false);
+  }
+
+  private Directive scanGroup(boolean canBeEmpty) {
     int lineNumber = this.lineNumber;
     try {
       // group = "{" or-sequence "}"
@@ -316,10 +327,31 @@ public class DirectiveParser {
           throw new RuntimeParserException(lineNumber);
         }
         if (orSeq == null) {
-          throw new RuntimeParserException(lineNumber, "Expected directive");
+          if (canBeEmpty) {
+            return new OrSequence(List.of());
+          } else {
+            throw new RuntimeParserException(lineNumber, "Expected directive");
+          }
         }
         return orSeq;
 
+      }
+      return null;
+    } catch (RuntimeParserException e) {
+      throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
+
+  Directive scanProcedureDecl() {
+    // procedure-decl = ""PROCEDURE" <name> group-directive
+    try {
+      if (skip("PROCEDURE")) {
+        String name = token();
+        Directive body = scanGroup(true);
+        if (body == null) {
+          throw new RuntimeParserException(lineNumber, "Expected procedure body");
+        }
+        return new ProcedureDecl(name, body);
       }
       return null;
     } catch (RuntimeParserException e) {
@@ -429,6 +461,10 @@ public class DirectiveParser {
       String line = scan().replaceFirst("\\s.*", "").toUpperCase();
 
       switch (line) {
+        case "CALL":
+          // action = "CALL" <name>
+          skip(line);
+          return new CallAction(token());
         case "DROP":
           skip(line);
           assertEndOfLine();

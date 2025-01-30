@@ -16,8 +16,12 @@
 package ar.com.rjgodoy.webhook_router;
 
 import ar.com.rjgodoy.webhook_router.filter.Directive;
+import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
+import ar.com.rjgodoy.webhook_router.filter.Result;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -44,6 +48,8 @@ public class Context {
 
   @Getter
   private boolean dry;
+
+  private List<ProcedureDecl> procedures = new ArrayList<>();
 
   Context() {
     parent = null;
@@ -104,6 +110,24 @@ public class Context {
       stream = Stream.concat(stream, parent.getSecrets());
     }
     return stream;
+  }
+
+  public void declare(ProcedureDecl proc) {
+    procedures.add(proc);
+  }
+
+  public void undeclare(ProcedureDecl proc) {
+    procedures.remove(proc);
+  }
+
+  public Result call(WebHook webhook, String procedureName) {
+    for (int i = procedures.size(); i-- > 0;) {
+      ProcedureDecl proc = procedures.get(i);
+      if (proc.getName().equals(procedureName)) {
+        return proc.call(webhook);
+      }
+    }
+    return Result.FALSE;
   }
 
 }
