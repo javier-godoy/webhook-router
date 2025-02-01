@@ -6,10 +6,12 @@
 # directive = ["NOT"] predicate / action / group-directive / or-directive
 # group-directive = "{" or-sequence "}"
 # 
-# predicate =  <header> ":" <value>
-#           / "$" <json-path> ":" <value>
+# predicate =  <header> ":"[operator] <value>
+#           / "$" <json-path> ":"[operator] <value>
 #           / "NULL" <macro-expansion>
 # 
+# operator  = "contains"
+#
 # action = "CALL" <name>
 #        / "DROP"
 #        / "DRY"
@@ -22,6 +24,8 @@
 #        / "SET" "$"<json-path> ":"[type] <macro-string>
 #
 # procedure-decl      = "PROCEDURE" <name> group-directive
+#
+# type                = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # or-directive        = "or" "{" 1*(directive CRLF) "}"
 # otherwise-directive = "otherwise" directive

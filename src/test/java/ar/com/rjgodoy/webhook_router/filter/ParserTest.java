@@ -203,10 +203,18 @@ public class ParserTest {
 
   @Test
   public void testScanPredicateHeader() {
-    String line = "x-foo-bar:x";
+    String line = "x-foo-bar: x";
     var d = parser(line).scanPredicate();
     Header h = new Header(line);
-    assertThat(d, is(new HeaderPredicate(h.name(), h.value())));
+    assertThat(d, is(new HeaderPredicate(h.name(), h.value(), PredicateOperator.EQ)));
+    assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanPredicateHeaderWithOperator() {
+    String line = "x-foo-bar:contains x";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(new HeaderPredicate("x-foo-bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -214,7 +222,15 @@ public class ParserTest {
   public void testScanPredicatePayload() {
     String line = "$foo.bar: x ";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new PayloadPredicate("foo.bar", "x")));
+    assertThat(d, is(new PayloadPredicate("foo.bar", "x", PredicateOperator.EQ)));
+    assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanPredicatePayloadWithOperator() {
+    String line = "$foo.bar:contains x ";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(new PayloadPredicate("foo.bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 

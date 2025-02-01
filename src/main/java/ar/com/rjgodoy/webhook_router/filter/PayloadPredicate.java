@@ -16,7 +16,7 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
@@ -30,14 +30,17 @@ final class PayloadPredicate implements Directive {
 
   private final String path;
   private final String value;
+  private final PredicateOperator operator;
 
   @Override
   public Result apply(WebHook webhook) {
-    return Result.of(Objects.equals(webhook.getPayload(path), value));
+    return Result.of(Optional.ofNullable(webhook.getPayload(path)).map(Object::toString)
+        .filter(s1 -> operator.test(s1, value)).isPresent());
   }
 
   @Override
   public String toString() {
-    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + value;
+    String op = operator == PredicateOperator.EQ ? "" : operator.toString().toLowerCase();
+    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + op + " " + value;
   }
 }

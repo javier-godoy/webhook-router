@@ -92,12 +92,19 @@ line3
 ```
 
 #### Predicates
-A predicate examines the value of a request header or payload element. The result is true if the value matches and false otherwise (certainly, there is room for improvement here). 
+A predicate examines the value of a request header or payload element. 
+The result is true if the predicate matches and false otherwise. 
 Payload predicates are identified by a $ prefix.
 
 ```
 X-GitHub-Event: ping
 $repository.full_name: javier-godoy/webhook-router
+```
+
+The `contains` operator can be specified immediately after the colon.
+If no operator is specified, the predicate does an exact match (certainly, there is room for improvement here).
+```
+$repository.full_name:contains javier-
 ```
 
 A `NULL` predicate evaluates as true if a macro expression is null.

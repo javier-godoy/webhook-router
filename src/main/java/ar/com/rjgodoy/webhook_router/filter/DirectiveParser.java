@@ -454,17 +454,16 @@ public class DirectiveParser {
 
       var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
       if (m1.matches()) {
-        Header h = new Header(next().trim());
-        return new HeaderPredicate(h.name(), h.value());
+        next();
+        return new HeaderPredicate(m1.group(1), m1.group(3).trim(), parseOperator(m1.group(2)));
       }
 
       var m2 = PAYLOAD_PREDICATE_PATTERN.matcher(scan());
       if (m2.matches()) {
-        String ss[] = scan().split(":", 2);
-        ss[0] = ss[0].substring(1);
-        if (!ss[0].contains("..") && !ss[0].endsWith(".") && !ss[0].startsWith(".")) {
+        String s = m2.group(1);
+        if (!s.contains("..") && !s.endsWith(".") && !s.startsWith(".")) {
           next();
-          return new PayloadPredicate(ss[0], ss[1].trim());
+          return new PayloadPredicate(s, m2.group(3).trim(), parseOperator(m2.group(2)));
         }
       }
 
@@ -476,6 +475,14 @@ public class DirectiveParser {
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
     }
+  }
+
+  private PredicateOperator parseOperator(String s) {
+    return switch (Optional.ofNullable(s).orElse("")) {
+      case "" -> PredicateOperator.EQ;
+      case "contains" -> PredicateOperator.CONTAINS;
+      default -> throw new RuntimeParserException(lineNumber, "Expected ':', ':contains'");
+    };
   }
 
   Directive scanAction() {
@@ -624,10 +631,11 @@ public class DirectiveParser {
     return new ForAction(variable, expression.substring(1), body);
   }
 
-  private final static Pattern HEADER_PREDICATE_PATTERN = Pattern.compile("[\\w-]+:.*");
-  private final static Pattern PAYLOAD_PREDICATE_PATTERN = Pattern.compile("\\$[\\w\\.]+:.*");
-  private final static Pattern SET_HEADER_PATTERN = HEADER_PREDICATE_PATTERN;
-  private final static Pattern SET_PAYLOAD_PATTERN = Pattern.compile("\\$([\\w\\.]+):(\\w+)?(.*)");
+  private final static Pattern HEADER_PREDICATE_PATTERN = Pattern.compile("([\\w-]+):(\\w+)?(.*)");
+  private final static Pattern PAYLOAD_PREDICATE_PATTERN =
+      Pattern.compile("\\$([\\w\\.]+):(\\w+)?(.*)");
+  private final static Pattern SET_HEADER_PATTERN = Pattern.compile("[\\w-]+:.*");
+  private final static Pattern SET_PAYLOAD_PATTERN = PAYLOAD_PREDICATE_PATTERN;
 
   private Directive parseSetAction() {
     // "SET" <header> ":" <macro-string>

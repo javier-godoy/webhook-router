@@ -19,6 +19,7 @@ import ar.com.rjgodoy.webhook_router.WebHook;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -29,13 +30,17 @@ final class HeaderPredicate implements Directive {
   private final String name;
   private final String value;
 
+  @NonNull
+  private final PredicateOperator operator;
+
   @Override
   public Result apply(WebHook webhook) {
-    return Result.of(webhook.getHeader(name).filter(value::equals).isPresent());
+    return Result.of(webhook.getHeader(name).filter(s1 -> operator.test(s1, value)).isPresent());
   }
 
   @Override
   public String toString() {
-    return name + ": " + value;
+    String op = operator == PredicateOperator.EQ ? "" : operator.toString().toLowerCase();
+    return name + ":" + op + " " + value;
   }
 }
