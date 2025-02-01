@@ -28,4 +28,9 @@ final class Not implements Directive {
     return directive.apply(webhook).negate();
   }
 
+  @Override
+  public String toString() {
+    return "NOT " + directive;
+  }
+
 }
