@@ -441,11 +441,16 @@ public class DirectiveParser {
 
   Directive scanPredicate() {
     int lineNumber = this.lineNumber;
-    try {
-      // # predicate = ["NOT"] <header> ":" <value> # /= "otherwise"
-      if (skip("not")) {
-        return new Not(scanPredicate());
+    // # predicate = ["NOT"] <header> ":" <value> # /= "otherwise"
+    if (skip("not")) {
+      var d = scanPredicate();
+      if (d == null) {
+        throw new RuntimeParserException(lineNumber, "Expected predicate");
       }
+      return new Not(d);
+    }
+
+    try {
 
       var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
       if (m1.matches()) {
@@ -461,6 +466,10 @@ public class DirectiveParser {
           next();
           return new PayloadPredicate(ss[0], ss[1].trim());
         }
+      }
+
+      if (skip("null")) {
+        return new NullPredicate(parseMacroString());
       }
 
       return null;

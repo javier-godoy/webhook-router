@@ -220,7 +220,22 @@ public class ParserTest {
 
   @Test
   public void testScanPredicateNull() {
+    String line = "NULL ${foo.bar}";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(new NullPredicate(new MacroString(List.of(new MacroExpansion("foo.bar"))))));
+    assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanPredicateInvalid() {
     assertThat(parser("x").scanPredicate(), is(nullValue()));
+  }
+
+  @Test
+  public void testScanPredicateInvalidNot() {
+    assertThat(assertThrows(RuntimeParserException.class, () -> {
+      parser("NOT x").scanPredicate();
+    }).getMessage(), containsString("Expected predicate;"));
   }
 
   @Test

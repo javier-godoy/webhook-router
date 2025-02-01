@@ -100,6 +100,11 @@ X-GitHub-Event: ping
 $repository.full_name: javier-godoy/webhook-router
 ```
 
+A `NULL` predicate evaluates as true if a macro expression is null.
+```
+NULL ${foo.bar}
+```
+
 #### Macro Strings
 
 Some actions utilize string-valued arguments, which are represented as the concatenation of literal strings (without quotation marks), escape sequences (`\\`, `\$`, `\#`, `\&`), and macro expansions written as `${macro}`. A macro expansion may resolve to a context variable, a request header, or a payload element. Depending on the action, a macro that resolves to an object or array may be coerced to string (e.g. the LOG action) or cause the action to fail (e.g. the POST action)
