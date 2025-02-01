@@ -142,14 +142,19 @@ This action returns `false` if the procedure does not exist.
 
 #### POST action
 ```
-POST <macro-string>
+POST <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]
 ```
 
-The `POST` action forwards the webhook to the URI specified by `<macro-string>`, where the macro string must expand to an absolute-URI with either `http://` or `https://` schemes.
-Upon successful posting (indicated by a status code in the 2xx range), the webhook is considered consumed.
+The `POST` action sends a webhook to the URI specified by `<macro-token>` (which must expand to an absolute-URI with either `http://` or `https://` schemes).
+
+The optional `INTO` clause specifies a property of the payload that will store the POST response.
+
+The optional `WITH` clause specifies a group directive that will initialize a new request. If `WITH` is not specified, the current webhook will be forwarded.
+
+If the `INTO` clause is not specified, the webhook is considered consumed upon successful posting.
 In dry mode, as specified by the [DRY action](#dry-action), the webhook is not posted, but it is still considered consumed.
 
-This action returns `true` if the webhook was consumed.
+This action returns `true` if the request is successful (indicated by a response status code in the 2xx range) or a JSON response (with any status code) was captured `INTO` a variable.
 
 
 #### DROP action

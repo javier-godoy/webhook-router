@@ -318,7 +318,7 @@ public class ParserTest {
   public void testScanActionPostEmpty() {
     assertThat(assertThrows(RuntimeParserException.class, () -> {
       parser("POST").scanAction();
-    }).getMessage(), containsString("Expected macro-string;"));
+    }).getMessage(), containsString("Expected macro-token;"));
   }
 
   @Test
@@ -414,7 +414,7 @@ public class ParserTest {
   public void testSetActionIllegal() {
     assertThat(assertThrows(RuntimeParserException.class, () -> {
       parser("SET X.Header: ${value}").scanAction();
-    }).getMessage(), containsString("Expected SET header: value;"));
+    }).getMessage(), containsString("Expected <SET action>"));
   }
 
   @Test
@@ -528,6 +528,51 @@ public class ParserTest {
     var d = parser("call foo").scanAction();
     assertThat(d, isA(CallAction.class.asSubclass(Directive.class)));
     assertThat(d, is(new CallAction("foo")));
+  }
+
+  @Test
+  public void testPost() {
+    var d = parser("POST http://example.com").scanAction();
+    assertThat(d, isA(PostAction.class.asSubclass(Directive.class)));
+    assertThat(d, is(PostAction.builder().macro(new MacroString("http://example.com")).build()));
+  }
+
+  @Test
+  public void testPostInto() {
+    var d = parser("POST http://example.com INTO $foo").scanAction();
+    assertThat(d, isA(PostAction.class.asSubclass(Directive.class)));
+    assertThat(d,
+        is(PostAction.builder().macro(new MacroString("http://example.com")).into("$foo").build()));
+  }
+
+  @Test
+  public void testPostIntoWith() {
+    var d = parser("POST http://example.com INTO $foo WITH {}").scanAction();
+    assertThat(d, isA(PostAction.class.asSubclass(Directive.class)));
+    assertThat(d,
+        is(PostAction.builder().macro(new MacroString("http://example.com")).into("$foo")
+            .body(new OrSequence(List.of())).build()));
+  }
+
+  @Test
+  public void testPostWithActions() {
+    var d = parser("""
+        POST http://example.com  WITH {
+            SET X-Foo: foo
+            SET $bar: bar
+            SET $baz:string baz
+        }""").scanAction();
+    assertThat(d, isA(PostAction.class.asSubclass(Directive.class)));
+    assertThat(d,
+        is(PostAction.builder().macro(new MacroString("http://example.com"))
+            .body(new OrSequence(
+                List.<Directive>of(new AndSequence(
+                    List.<Directive>of(
+                        new SetHeaderAction("X-Foo", new MacroString("foo")),
+                        new SetPayloadAction("bar", null, new MacroString("bar")),
+                        new SetPayloadAction("baz", "string", new MacroString("baz"))
+                    )))))
+            .build()));
   }
 
 }

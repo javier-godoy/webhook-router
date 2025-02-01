@@ -26,8 +26,8 @@ import lombok.RequiredArgsConstructor;
 @Getter(AccessLevel.PACKAGE)
 final class SetHeaderAction implements Directive {
 
-  private final String name;
-  private final MacroString macro;
+  protected final String name;
+  protected final MacroString macro;
 
   @Override
   public Result apply(WebHook webhook) {

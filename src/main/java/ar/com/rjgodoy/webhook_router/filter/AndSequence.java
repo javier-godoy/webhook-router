@@ -44,7 +44,11 @@ final class AndSequence extends LogicalDirective {
 
   @Override
   public String toString() {
-    return directives.stream().map(Object::toString).collect(Collectors.joining("\n"));
-    // return " " + ToStringHelper.pad(s);
+    String s = directives.stream().map(Object::toString).collect(Collectors.joining("\n"));
+    if (s.isEmpty()) {
+      return "";
+    } else {
+      return "\n  " + ToStringHelper.pad(s) + "\n";
+    }
   }
 }

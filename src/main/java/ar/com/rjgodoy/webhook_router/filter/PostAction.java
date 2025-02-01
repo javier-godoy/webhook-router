@@ -27,17 +27,26 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONObject;
 
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode
+@Builder
 final class PostAction implements Directive {
 
   @Getter(AccessLevel.PACKAGE)
   private final MacroString macro;
+
+  private final Directive body;
+
+  private final String into;
 
   @Override
   public Result apply(WebHook webhook) {
@@ -65,12 +74,35 @@ final class PostAction implements Directive {
       if (!post(uri, webhook)) {
         return Result.FALSE;
       }
+    } else {
+      webhook.context.consume();
     }
-    webhook.context.consume();
     return Result.TRUE;
   }
 
   private boolean post(URI uri, WebHook webhook) {
+
+    WebHook original = webhook;
+
+    if (body!=null) {
+      webhook = new WebHook(null, List.of(), new JSONObject()) {
+        // MacroExpansion resolves against the original webhook
+        @Override
+        public Optional<String> getHeader(String name) {
+          return original.getHeader(name);
+        }
+
+        @Override
+        public Object getPayload(String expansion) {
+          return original.getPayload(expansion);
+        }
+      };
+
+      if (body.apply(webhook) == Result.FALSE) {
+        return false;
+      }
+    }
+
     HttpClient client = HttpClient.newBuilder()
           .version(Version.HTTP_1_1)
           .connectTimeout(Duration.ofSeconds(10))
@@ -91,7 +123,8 @@ final class PostAction implements Directive {
       request.header(header.name(), header.value());
     }
 
-    request.POST(BodyPublishers.ofString(webhook.getPayload().toString()));
+    String payload = webhook.getPayload().toString();
+    request.POST(BodyPublishers.ofString(payload));
 
     HttpResponse<String> response;
     try {
@@ -105,8 +138,27 @@ final class PostAction implements Directive {
     }
 
     int sc = response.statusCode();
+
+    boolean into_json = false;
+
+    if (into != null) {
+      String contentType = response.headers().firstValue("Content-Type")
+          .map(s -> s.replaceFirst(";.*", "")).orElse("");
+      if (contentType.equals("application/json")) {
+        original.getPayload().put(into, new JSONObject(response.body()));
+        into_json = true;
+      } else {
+        original.getPayload().put(into, response.body());
+      }
+    }
+
     if (sc >= 200 && sc < 300) {
-      System.out.println(response.body());
+      if (into != null) {
+        System.out.println(response.body());
+        webhook.context.consume();
+      }
+      return true;
+    } else if (into_json) {
       return true;
     } else {
       System.err.println("[POST] " + sc + " " + uri + " " + response.body());
@@ -116,6 +168,14 @@ final class PostAction implements Directive {
 
   @Override
   public String toString() {
-    return "POST " + macro;
+    String s = "POST " + macro;
+    if (into != null) {
+      s += " INTO " + into;
+    }
+    if (body != null) {
+      s += " WITH " + body + "\n";
+    }
+    return s;
+
   }
 }

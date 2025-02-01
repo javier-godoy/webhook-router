@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.NonNull;
 
 public class DirectiveParser {
@@ -363,6 +365,16 @@ public class DirectiveParser {
     return parseMacroString(next());
   }
 
+  MacroString parseMacroToken() {
+    String token;
+    try {
+      token = token();
+    } catch (RuntimeParserException e) {
+      throw new RuntimeParserException(lineNumber, "Expected macro-token");
+    }
+    return parseMacroString(token);
+  }
+
   private MacroString parseMacroString(String line) {
     List<MacroStringPart> parts = new LinkedList<>();
 
@@ -435,12 +447,14 @@ public class DirectiveParser {
         return new Not(scanPredicate());
       }
 
-      if (scan().matches("[\\w-]+:.*")) {
+      var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
+      if (m1.matches()) {
         Header h = new Header(next().trim());
         return new HeaderPredicate(h.name(), h.value());
       }
 
-      if (scan().matches("\\$[\\w\\.]+:.*")) {
+      var m2 = PAYLOAD_PREDICATE_PATTERN.matcher(scan());
+      if (m2.matches()) {
         String ss[] = scan().split(":", 2);
         ss[0] = ss[0].substring(1);
         if (!ss[0].contains("..") && !ss[0].endsWith(".") && !ss[0].startsWith(".")) {
@@ -483,10 +497,34 @@ public class DirectiveParser {
         case "LOG":
           skip("LOG");
           return parseLogAction();
-        case "POST":
-          // action = "POST" <macro-string>
+        case "POST": {
+          // action = "POST" <macro-string> ["INTO" <token>] ["WITH {" and-sequence "}"]
           skip(line);
-          return new PostAction(parseMacroString());
+          MacroString location = parseMacroToken();
+          String into = null;
+          Directive body = null;
+          while (next != null) {
+            if (skip("INTO")) {
+              if (into != null) {
+                throw new RuntimeParserException(this.lineNumber, "Duplicate clause INTO");
+              }
+              into = token();
+              continue;
+            }
+            if (skip("WITH")) {
+              if (body != null) {
+                throw new RuntimeParserException(this.lineNumber, "Duplicate clause WITH");
+              }
+              body = scanGroup(true);
+              if (!(body instanceof OrSequence)) {
+                body = new OrSequence(List.of(body));
+              }
+              continue;
+            }
+          }
+          assertEndOfLine();
+          return PostAction.builder().macro(location).into(into).body(body).build();
+        }
         case "REENTER": {
           // action = "REENTER" ["COPY"]
           skip(line);
@@ -511,8 +549,6 @@ public class DirectiveParser {
       throw RuntimeParserException.chain(lineNumber, e);
     }
   }
-
-
 
   private Directive parseLogAction() {
     // action = "LOG" <macro-string>
@@ -579,14 +615,46 @@ public class DirectiveParser {
     return new ForAction(variable, expression.substring(1), body);
   }
 
+  private final static Pattern HEADER_PREDICATE_PATTERN = Pattern.compile("[\\w-]+:.*");
+  private final static Pattern PAYLOAD_PREDICATE_PATTERN = Pattern.compile("\\$[\\w\\.]+:.*");
+  private final static Pattern SET_HEADER_PATTERN = HEADER_PREDICATE_PATTERN;
+  private final static Pattern SET_PAYLOAD_PATTERN = Pattern.compile("\\$([\\w\\.]+):(\\w+)?(.*)");
+
   private Directive parseSetAction() {
     // "SET" <header> ":" <macro-string>
-    Directive predicate = scanPredicate();
-    if (predicate instanceof HeaderPredicate h) {
-      MacroString macro = parseMacroString(h.getValue());
-      return new SetHeaderAction(h.getName(), macro);
+    // "SET" "$"<json-path> ":"[type] <macro-string>
+
+    var m1 = SET_HEADER_PATTERN.matcher(scan());
+    if (m1.matches()) {
+      Header h = new Header(next().trim());
+      MacroString macro = parseMacroString(h.value());
+      return new SetHeaderAction(h.name(), macro);
     }
-    throw new RuntimeParserException(lineNumber, "Expected SET header: value");
+
+    var m2 = SET_PAYLOAD_PATTERN.matcher(scan());
+    if (m2.matches()) {
+      String s = m2.group(1);
+      if (!s.contains("..") && !s.endsWith(".") && !s.startsWith(".")) {
+        String type = m2.group(2);
+        MacroString macro = parseMacroString(m2.group(3));
+        switch (Optional.ofNullable(type).orElse("")) {
+          case "":
+          case "string":
+          case "number":
+          case "boolean":
+          case "null":
+          case "array":;
+          case "object":
+            next();
+            return new SetPayloadAction(s, type, macro);
+          default:
+            throw new RuntimeParserException(lineNumber,
+                "Expected 'string', 'number', 'boolean', 'array', 'object', 'null'");
+        }
+      }
+    }
+
+    throw new RuntimeParserException(lineNumber, "Expected <SET action>");
   }
 
 }
