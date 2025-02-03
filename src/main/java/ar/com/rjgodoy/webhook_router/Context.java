@@ -128,6 +128,7 @@ public class Context {
         return proc.call(webhook);
       }
     }
+    System.err.println("No such procedure: " + procedureName);
     return Result.FALSE;
   }
 
