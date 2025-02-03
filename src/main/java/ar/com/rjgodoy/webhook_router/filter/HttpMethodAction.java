@@ -25,7 +25,6 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -92,7 +91,7 @@ abstract class HttpMethodAction implements Directive {
     WebHook original = webhook;
 
     if (getBody() != null) {
-      webhook = new WebHook(null, List.of(), new JSONObject()) {
+      webhook = new WebHook(webhook.context) {
         // MacroExpansion resolves against the original webhook
         @Override
         public Optional<String> getHeader(String name) {
