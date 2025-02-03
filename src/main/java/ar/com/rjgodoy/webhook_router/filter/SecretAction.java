@@ -31,7 +31,7 @@ class SecretAction implements Directive {
 
   @Override
   public Result apply(WebHook webhook) {
-    String s = macro.eval(webhook, true);
+    String s = macro.eval(webhook);
     if (s != null) {
       webhook.context.addSecret(s);
     } else {

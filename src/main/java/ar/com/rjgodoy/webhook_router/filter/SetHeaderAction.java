@@ -31,7 +31,7 @@ final class SetHeaderAction implements Directive {
 
   @Override
   public Result apply(WebHook webhook) {
-    String value = macro.eval(webhook, false);
+    String value = macro.eval(webhook);
     if (value == null) {
       System.err.println("[SET] Macro expanded to null: " + macro);
       return Result.FALSE;

@@ -53,7 +53,7 @@ abstract class HttpMethodAction implements Directive {
 
   @Override
   public final Result apply(WebHook webhook) {
-    String location = getMacro().eval(webhook, false);
+    String location = getMacro().eval(webhook);
     if (location == null) {
       logError("[POST] Macro expanded to null: " + getMacro());
       return Result.FALSE;

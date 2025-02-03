@@ -25,18 +25,14 @@ final class MacroExpansion implements MacroStringPart {
   private final String expansion;
 
   @Override
-  public String eval(WebHook webhook, boolean coerce) {
+  public String eval(WebHook webhook) {
     if (expansion.startsWith("env.")) {
       return System.getenv(expansion.substring(4));
     }
     if (!expansion.contains(".")) {
       Object value = webhook.context.get(expansion);
       if (value != null) {
-        if (coerce || isString(value)) {
-          return value.toString();
-        } else {
-          return null;
-        }
+        return value.toString();
       }
 
       String h = webhook.getHeader(expansion).orElse(null);
@@ -47,22 +43,9 @@ final class MacroExpansion implements MacroStringPart {
 
     Object value = webhook.getPayload(expansion);
     if (value != null) {
-      if (coerce || isString(value)) {
-        return value.toString();
-      } else {
-        return null;
-      }
+      return value.toString();
     }
     return (String) value;
-  }
-
-  private boolean isString(Object value) {
-    if (!(value instanceof String)) {
-      System.err.println("Macro expansion of " + expansion + " is not a string: "
-          + value.getClass().getSimpleName());
-      return false;
-    }
-    return true;
   }
 
   @Override

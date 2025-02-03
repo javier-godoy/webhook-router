@@ -35,13 +35,13 @@ class MacroString {
   @Accessors(fluent = true)
   private final List<MacroStringPart> parts;
 
-  public String eval(WebHook webhook, boolean coerce) {
+  public String eval(WebHook webhook) {
     if (parts.size() == 1) {
-      return parts.get(0).eval(webhook, coerce);
+      return parts.get(0).eval(webhook);
     } else {
       StringBuilder sb = new StringBuilder();
       for (var part : parts) {
-        String s = part.eval(webhook, coerce);
+        String s = part.eval(webhook);
         if (s == null) {
           return null;
         }

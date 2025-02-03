@@ -30,7 +30,7 @@ final class NullPredicate implements Directive {
 
   @Override
   public Result apply(WebHook webhook) {
-    return Result.of(macro.eval(webhook, true) == null);
+    return Result.of(macro.eval(webhook) == null);
   }
 
   @Override

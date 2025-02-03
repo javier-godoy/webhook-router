@@ -45,7 +45,7 @@ final class SetPayloadAction implements Directive {
       var = path.substring(pos + 1);
     }
 
-    String value = macro.eval(webhook, true);
+    String value = macro.eval(webhook);
     if (value == null) {
       System.err.println("[SET] Macro expanded to null: " + macro);
       return Result.FALSE;

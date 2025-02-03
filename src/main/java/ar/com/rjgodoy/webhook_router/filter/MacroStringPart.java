@@ -19,6 +19,6 @@ import ar.com.rjgodoy.webhook_router.WebHook;
 
 public sealed interface MacroStringPart permits MacroLiteral, MacroExpansion, MacroEscape {
 
-  String eval(WebHook webhook, boolean coerce);
+  String eval(WebHook webhook);
 
 }
