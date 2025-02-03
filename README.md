@@ -201,7 +201,7 @@ EXIT
 ```
 
 The `EXIT` action terminates the processing chain for a particular webhook instance.
-If the webhook instance was copied (see [FOR](#for-action), [REENTER COPY](#reenter-action)), the caller with resume processing of the original instance.
+If the webhook instance was copied (see [REENTER COPY](#reenter-action)), the caller with resume processing of the original instance.
 
 This action does not return a logical value.
 
@@ -222,13 +222,11 @@ FOR variable IN $json.path {...}
 ```
 
 The FOR action iterates over all the values of an array from the webhook payload. 
-In each iteration, a _copy_ of the original webhook is initialized, and the named context variable is assigned with an element from the array. 
+In each iteration, the named context variable is assigned with an element from the array. 
 The modified webhook is processed by the body of the FOR action.
+The FOR action evaluates as null if the json path resolves to an array, and it's null otherwise.
 
 TODO: iterate over object properties.
-
-TODO: iterate without copying.
-
 
 #### SECRET action
 ```

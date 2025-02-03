@@ -78,6 +78,10 @@ public class Context {
     variables.put(name, value);
   }
 
+  public void unset(String name) {
+    variables.remove(name);
+  }
+
   public Object get(String name) {
     String ss[] = name.split("\\.");
 
