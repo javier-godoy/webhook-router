@@ -60,6 +60,7 @@ public class Context {
     dry = parent.dry;
     consumed = parent.consumed;
     rules = parent.rules;
+    procedures = parent.procedures;
   }
 
   void setRules(Directive rules) {
