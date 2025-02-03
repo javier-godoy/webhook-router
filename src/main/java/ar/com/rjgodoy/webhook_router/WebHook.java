@@ -44,6 +44,10 @@ public class WebHook {
         new JSONObject(webhook.payload.toString()), new Context(webhook.context));
   }
 
+  public WebHook(Context context) {
+    this(null, new ArrayList<>(), new JSONObject(), new Context(context));
+  }
+
   public Optional<String> getHeader(String name) {
     return headers.stream().filter(Header.is(name)).findFirst().map(Header::value);
   }
