@@ -18,6 +18,7 @@
 #        / "EXIT"
 #        / "LOG" <macro-string> ["&&"]; double ampersand in macro-string must be escaped
 #        / "POST" <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]; must expand to an absolute-URI
+#        / "GET" <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]; must expand to an absolute-URI
 #        / "FOR" <variable> "IN" "$" <json-path> <group-directive>
 #        / "REENTER [COPY]"
 #        / "SET" <header> ":" <macro-string>

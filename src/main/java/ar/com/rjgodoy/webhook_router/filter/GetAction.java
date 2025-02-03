@@ -19,7 +19,6 @@ import ar.com.rjgodoy.webhook_router.WebHook;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import lombok.AccessLevel;
@@ -31,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = false)
 @Builder
-final class PostAction extends HttpMethodAction {
+final class GetAction extends HttpMethodAction {
 
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;
@@ -44,17 +43,14 @@ final class PostAction extends HttpMethodAction {
 
   @Override
   protected String getMethodName() {
-    return "POST";
+    return "GET";
   }
 
   @Override
   protected HttpResponse<String> send(HttpClient client, HttpRequest.Builder request,
       WebHook webhook)
       throws IOException, InterruptedException {
-
-    String payload = webhook.getPayload().toString();
-    request.POST(BodyPublishers.ofString(payload));
-
+    request.GET();
     return client.send(request.build(), BodyHandlers.ofString());
   }
 
