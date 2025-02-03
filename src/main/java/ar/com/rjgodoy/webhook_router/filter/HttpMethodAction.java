@@ -148,13 +148,13 @@ abstract class HttpMethodAction implements Directive {
       if (contentType.equals("application/json")) {
         String responseBody = response.body().trim();
         if (responseBody.startsWith("[")) {
-          webhook.getPayload().put(getInto(), new JSONArray(response.body()));
+          original.getPayload().put(getInto(), new JSONArray(response.body()));
         } else {
-          webhook.getPayload().put(getInto(), new JSONObject(response.body()));
+          original.getPayload().put(getInto(), new JSONObject(response.body()));
         }
         into_json = true;
       } else {
-        webhook.getPayload().put(getInto(), response.body());
+        original.getPayload().put(getInto(), response.body());
       }
     }
 
