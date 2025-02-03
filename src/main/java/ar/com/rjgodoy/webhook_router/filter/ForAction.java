@@ -36,19 +36,17 @@ final class ForAction implements Directive {
     Object obj = webhook.getPayload(arrayName);
     if (obj instanceof JSONArray array) {
       int n = array.length();
-      if (n == 0) {
-        return Result.FALSE;
-      }
+      Result result = Result.NULL;
       for (int i = 0; i < n; i++) {
         WebHook copy = new WebHook(webhook);
         copy.context.set(variable, array.get(i));
         try {
-          body.apply(copy);
+          result = result.and(body.apply(copy));
         } catch (ExitActionException e) {
           // done
         }
       }
-      return Result.TRUE;
+      return result;
     } else {
       System.err.println("[FOR] " + arrayName + " is not an array");
       return Result.FALSE;
