@@ -30,7 +30,7 @@ public class MacroExpansionTest {
     payload.put("a", new JSONObject(Map.of("b", new JSONObject(Map.of("c", 1)))));
     WebHook w = new WebHook("", List.of(), payload);
 
-    assertEquals("1", new MacroExpansion("a.b.c").eval(w, true));
+    assertEquals("1", new MacroExpansion("a.b.c").eval(w));
   }
 
 }

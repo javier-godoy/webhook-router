@@ -26,7 +26,7 @@ final class MacroEscape implements MacroStringPart {
   private final char escape;
 
   @Override
-  public String eval(WebHook webhook, boolean coerce) {
+  public String eval(WebHook webhook) {
     return Character.toString(escape);
   }
 

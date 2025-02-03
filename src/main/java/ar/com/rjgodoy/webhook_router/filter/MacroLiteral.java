@@ -29,7 +29,7 @@ final class MacroLiteral implements MacroStringPart {
   private final String literal;
 
   @Override
-  public String eval(WebHook webhook, boolean coerce) {
+  public String eval(WebHook webhook) {
     return literal;
   }
 
