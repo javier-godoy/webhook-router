@@ -168,6 +168,7 @@ In dry mode, as specified by the [DRY action](#dry-action), the webhook is not p
 
 This action returns `true` if the request is successful (indicated by a response status code in the 2xx range) or a JSON response (with any status code) was captured `INTO` a variable.
 
+TODO: store the response INTO a context variable instead of POST response (requires that `MacroExpansion` and `context.get` support JsonObject).
 
 #### DROP action
 
