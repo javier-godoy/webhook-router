@@ -16,6 +16,7 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.Header;
+import ar.com.rjgodoy.webhook_router.filter.HttpMethodAction.HttpMethodActionBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -513,7 +514,7 @@ public class DirectiveParser {
         case "LOG":
           skip("LOG");
           return parseLogAction();
-        case "POST": {
+        case "POST", "GET": {
           // action = "POST" <macro-string> ["INTO" <token>] ["WITH {" and-sequence "}"]
           skip(line);
           MacroString location = parseMacroToken();
@@ -539,7 +540,12 @@ public class DirectiveParser {
             }
           }
           assertEndOfLine();
-          return PostAction.builder().macro(location).into(into).body(body).build();
+          HttpMethodActionBuilder<?> builder = switch(line) {
+            case "GET" -> GetAction.builder();
+            case "POST" -> PostAction.builder();
+            default -> throw new AssertionError();
+          };
+          return builder.macro(location).into(into).body(body).build();
         }
         case "REENTER": {
           // action = "REENTER" ["COPY"]

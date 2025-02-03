@@ -32,6 +32,8 @@ import lombok.RequiredArgsConstructor;
 @Builder
 final class GetAction extends HttpMethodAction {
 
+  public final static class GetActionBuilder extends HttpMethodActionBuilder<GetActionBuilder> {}
+
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;
 
