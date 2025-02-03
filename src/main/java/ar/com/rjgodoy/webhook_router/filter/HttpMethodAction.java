@@ -27,6 +27,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 abstract class HttpMethodAction implements Directive {
@@ -145,7 +146,12 @@ abstract class HttpMethodAction implements Directive {
       String contentType = response.headers().firstValue("Content-Type")
           .map(s -> s.replaceFirst(";.*", "")).orElse("");
       if (contentType.equals("application/json")) {
-        webhook.getPayload().put(getInto(), new JSONObject(response.body()));
+        String responseBody = response.body().trim();
+        if (responseBody.startsWith("[")) {
+          webhook.getPayload().put(getInto(), new JSONArray(response.body()));
+        } else {
+          webhook.getPayload().put(getInto(), new JSONObject(response.body()));
+        }
         into_json = true;
       } else {
         webhook.getPayload().put(getInto(), response.body());
