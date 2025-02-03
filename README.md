@@ -152,23 +152,24 @@ PROCEDURE foo {
 The `CALL` action executes a named procedure and returns its result. 
 This action returns `false` if the procedure does not exist.
 
-#### POST action
+#### GET/POST action
 ```
+GET  <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]
 POST <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]
 ```
 
-The `POST` action sends a webhook to the URI specified by `<macro-token>` (which must expand to an absolute-URI with either `http://` or `https://` schemes).
+The `POST` and `GET` actions send HTTP request to the URI specified by `<macro-token>` (which must expand to an absolute-URI with either `http://` or `https://` schemes).
 
 The optional `INTO` clause specifies a property of the payload that will store the POST response.
 
 The optional `WITH` clause specifies a group directive that will initialize a new request. If `WITH` is not specified, the current webhook will be forwarded.
 
-If the `INTO` clause is not specified, the webhook is considered consumed upon successful posting.
-In dry mode, as specified by the [DRY action](#dry-action), the webhook is not posted, but it is still considered consumed.
+If the `INTO` clause is not specified, the webhook is considered consumed upon if the request is successful.
+In dry mode, as specified by the [DRY action](#dry-action), the request is not sent, but it is still considered consumed.
 
 This action returns `true` if the request is successful (indicated by a response status code in the 2xx range) or a JSON response (with any status code) was captured `INTO` a variable.
 
-TODO: store the response INTO a context variable instead of POST response (requires that `MacroExpansion` and `context.get` support JsonObject).
+TODO: store the response INTO a context variable instead of payload (requires that `MacroExpansion` and `context.get` support JsonObject).
 
 #### DROP action
 
@@ -200,7 +201,7 @@ This action does not return a logical value.
 DRY
 ```
 
-The DRY action enters "dry-run" mode. During dry-run mode, the webhook undergoes normal processing internally. However, in this mode, POST actions are not executed. This allows for the evaluation of potential triggered actions based on the webhook without actually carrying them out.
+The DRY action enters "dry-run" mode. During dry-run mode, the webhook undergoes normal processing internally. However, in this mode, GET/POST actions are not executed. This allows for the evaluation of potential triggered actions based on the webhook without actually carrying them out.
 
 
 #### FOR action
