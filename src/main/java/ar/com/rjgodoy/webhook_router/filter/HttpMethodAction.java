@@ -39,6 +39,17 @@ abstract class HttpMethodAction implements Directive {
 
   protected abstract String getMethodName();
 
+  public abstract static class HttpMethodActionBuilder<T extends HttpMethodActionBuilder<?>> {
+    public abstract T macro(MacroString value);
+
+    public abstract T into(String value);
+
+    public abstract T body(Directive value);
+
+    public abstract HttpMethodAction build();
+  }
+
+
   @Override
   public final Result apply(WebHook webhook) {
     String location = getMacro().eval(webhook, false);

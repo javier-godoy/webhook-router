@@ -16,6 +16,8 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
+import ar.com.rjgodoy.webhook_router.filter.GetAction.GetActionBuilder;
+import ar.com.rjgodoy.webhook_router.filter.HttpMethodAction.HttpMethodActionBuilder;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,6 +35,8 @@ import lombok.RequiredArgsConstructor;
 @Builder
 final class PostAction extends HttpMethodAction {
 
+  public final static class PostActionBuilder extends HttpMethodActionBuilder<PostActionBuilder> {}
+  
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;
 
