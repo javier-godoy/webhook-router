@@ -19,22 +19,21 @@ import ar.com.rjgodoy.webhook_router.filter.Directive;
 import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
 import ar.com.rjgodoy.webhook_router.filter.Result;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.json.JSONObject;
 
 public class Context {
 
   @Getter(AccessLevel.PACKAGE)
   private final Context parent;
 
-  private final Map<String, Object> variables = new HashMap<>();
+  private final JSONObject variables = new JSONObject();
 
   private final Set<Directive> reenter = new HashSet<>();
 
@@ -80,12 +79,24 @@ public class Context {
   }
 
   public Object get(String name) {
-    Object value = variables.get(name);
-    if (value == null && parent != null) {
-      return parent.get(name);
+    String ss[] = name.split("\\.");
+
+    JSONObject obj = variables;
+    int n = ss.length - 1;
+    for (int i = 0; i < n; i++) {
+      if (!obj.has(ss[i])) {
+        return parent != null ? parent.get(name) : null;
+      }
+      obj = obj.getJSONObject(ss[i]);
     }
-    return value;
+
+    if (!obj.has(ss[n])) {
+      return parent != null ? parent.get(name) : null;
+    } else {
+      return obj.get(ss[n]);
+    }
   }
+
 
   public boolean reenter(WebHook webhook, Directive directive) {
     if (parent != null && parent.reenter.contains(directive)) {
