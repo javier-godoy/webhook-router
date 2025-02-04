@@ -29,19 +29,20 @@ final class MacroExpansion implements MacroStringPart {
     if (expansion.startsWith("env.")) {
       return System.getenv(expansion.substring(4));
     }
-    if (!expansion.contains(".")) {
-      Object value = webhook.context.get(expansion);
-      if (value != null) {
-        return value.toString();
-      }
 
+    Object value = webhook.context.get(expansion);
+    if (value != null) {
+      return value.toString();
+    }
+
+    if (!expansion.contains(".")) {
       String h = webhook.getHeader(expansion).orElse(null);
       if (h != null) {
         return h;
       }
     }
 
-    Object value = webhook.getPayload(expansion);
+    value = webhook.getPayload(expansion);
     if (value != null) {
       return value.toString();
     }
