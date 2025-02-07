@@ -160,7 +160,7 @@ abstract class HttpMethodAction implements Directive {
     if (sc >= 200 && sc < 300) {
       if (getInto() == null) {
         System.out.println(response.body());
-        webhook.context.consume();
+        original.context.consume();
       }
       return true;
     } else if (into_json) {
