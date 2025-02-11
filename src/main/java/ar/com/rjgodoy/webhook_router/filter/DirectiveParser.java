@@ -528,8 +528,8 @@ public class DirectiveParser {
         case "LOG":
           skip("LOG");
           return parseLogAction();
-        case "POST", "GET": {
-          // action = "POST" <macro-string> ["INTO" <token>] ["WITH {" and-sequence "}"]
+        case "POST", "GET", "DELETE": {
+          // action = <method> <macro-string> ["INTO" <token>] ["WITH {" and-sequence "}"]
           skip(line);
           MacroString location = parseMacroToken();
           String into = null;
@@ -557,6 +557,7 @@ public class DirectiveParser {
           HttpMethodActionBuilder<?> builder = switch(line) {
             case "GET" -> GetAction.builder();
             case "POST" -> PostAction.builder();
+            case "DELETE" -> DeleteAction.builder();
             default -> throw new AssertionError();
           };
           return builder.macro(location).into(into).body(body).build();

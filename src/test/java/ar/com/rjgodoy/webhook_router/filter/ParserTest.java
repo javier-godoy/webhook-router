@@ -610,6 +610,20 @@ public class ParserTest {
   }
 
   @Test
+  public void testGet() {
+    var d = parser("GET http://example.com").scanAction();
+    assertThat(d, isA(GetAction.class.asSubclass(Directive.class)));
+    assertThat(d, is(GetAction.builder().macro(new MacroString("http://example.com")).build()));
+  }
+
+  @Test
+  public void testDelete() {
+    var d = parser("DELETE http://example.com").scanAction();
+    assertThat(d, isA(DeleteAction.class.asSubclass(Directive.class)));
+    assertThat(d, is(DeleteAction.builder().macro(new MacroString("http://example.com")).build()));
+  }
+
+  @Test
   public void testPostInto() {
     var d = parser("POST http://example.com INTO $foo").scanAction();
     assertThat(d, isA(PostAction.class.asSubclass(Directive.class)));

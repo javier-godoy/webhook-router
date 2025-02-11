@@ -157,13 +157,13 @@ PROCEDURE foo {
 The `CALL` action executes a named procedure and returns its result. 
 This action returns `false` if the procedure does not exist.
 
-#### GET/POST action
+#### HTTP actions
 ```
-GET  <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]
-POST <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]
+<http-method> <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]; token must expand to an absolute-URI
+http-method = "POST" / "GET" / "DELETE"
 ```
 
-The `POST` and `GET` actions send HTTP request to the URI specified by `<macro-token>` (which must expand to an absolute-URI with either `http://` or `https://` schemes).
+The `POST`, `GET` and `DELETE` actions send HTTP request to the URI specified by `<macro-token>` (which must expand to an absolute-URI with either `http://` or `https://` schemes).
 
 The optional `INTO` clause specifies a property of the payload that will store the POST response.
 
@@ -175,6 +175,7 @@ In dry mode, as specified by the [DRY action](#dry-action), the request is not s
 This action returns `true` if the request is successful (indicated by a response status code in the 2xx range) or a JSON response (with any status code) was captured `INTO` a variable.
 
 TODO: store the response INTO a context variable instead of payload.
+TODO: only forward request for POST
 
 #### DROP action
 
