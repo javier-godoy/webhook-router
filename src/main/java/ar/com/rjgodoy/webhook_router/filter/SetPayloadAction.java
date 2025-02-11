@@ -53,13 +53,18 @@ final class SetPayloadAction implements Directive {
 
     String type = this.type;
     if (type == null) {
-      type = switch (value) {
-        case "true" -> "boolean";
-        case "false" -> "boolean";
-        case "null" -> "null";
-        case "[]" -> "array";
-        default -> value.matches("(-)?\\d+(\\.\\d+)?") ? "number" : "string";
-      };
+      if (value.startsWith("{")) {
+        type = "object";
+      } else if (value.startsWith("[")) {
+        type = "array";
+      } else {
+        type = switch (value) {
+          case "true" -> "boolean";
+          case "false" -> "boolean";
+          case "null" -> "null";
+          default -> value.matches("(-)?\\d+(\\.\\d+)?") ? "number" : "string";
+        };
+      }
     }
 
     switch (type) {
