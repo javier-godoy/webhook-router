@@ -54,22 +54,22 @@ abstract class HttpMethodAction implements Directive {
   public final Result apply(WebHook webhook) {
     String location = getMacro().eval(webhook);
     if (location == null) {
-      logError("[POST] Macro expanded to null: " + getMacro());
+      logError("Macro expanded to null: " + getMacro());
       return Result.FALSE;
     }
     URI uri;
     try {
       uri = new URI(location);
     } catch (URISyntaxException e) {
-      logError("[POST] URISyntaxException " + e.getMessage());
+      logError("URISyntaxException " + e.getMessage());
       return Result.FALSE;
     }
     if (!uri.isAbsolute()) {
-      logError("[POST] URI must be absolute");
+      logError("URI must be absolute");
       return Result.FALSE;
     }
     if (!uri.getScheme().equals("http") && !uri.getScheme().equals("https")) {
-      logError("[POST] URI scheme must be either http or https");
+      logError("URI scheme must be either http or https");
       return Result.FALSE;
     }
     if (!webhook.context.isDry()) {
@@ -159,7 +159,7 @@ abstract class HttpMethodAction implements Directive {
 
     if (sc >= 200 && sc < 300) {
       if (getInto() == null) {
-        System.out.println(response.body());
+        System.out.println("[" + getMethodName() + "] " + response.body());
         original.context.consume();
       }
       return true;
