@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import lombok.NonNull;
 
@@ -207,11 +208,20 @@ public class DirectiveParser {
 
 
   Directive scanOrDirective() {
+    return scanOrNorDirective("or", dd -> dd.size() == 1 ? dd.get(0) : new OrDirective(dd));
+  }
+
+  Directive scanNorDirective() {
+    return scanOrNorDirective("nor", dd -> new NorDirective(dd));
+  }
+
+  private Directive scanOrNorDirective(String keyword, Function<List<Directive>, Directive> ctor) {
     int lineNumber = this.lineNumber;
     try {
       // or-directive = "or" 1*(directive CRLF)
+      // nor-directive = "nor" 1*(directive CRLF)
       scan();
-      if (skip("or")) {
+      if (skip(keyword)) {
         if (!skip('{')) {
           throw new RuntimeParserException(lineNumber);
         }
@@ -232,14 +242,10 @@ public class DirectiveParser {
       if (!skip('}')) {
         throw new RuntimeParserException(lineNumber);
       }
-      switch (directives.size()) {
-        case 0:
-          throw new RuntimeParserException(lineNumber, "Expected directive");
-        case 1:
-          return directives.get(0);
-        default:
-          return new OrDirective(directives);
+      if (directives.isEmpty()) {
+        throw new RuntimeParserException(lineNumber, "Expected directive");
       }
+      return ctor.apply(directives);
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
     }
@@ -306,6 +312,10 @@ public class DirectiveParser {
         return directive;
       }
       directive = scanOrDirective();
+      if (directive != null) {
+        return directive;
+      }
+      directive = scanNorDirective();
       if (directive != null) {
         return directive;
       }

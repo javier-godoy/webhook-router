@@ -52,7 +52,7 @@ line2
 line3
 ```
 
-There is also an OR directive, where consecutive lines imply a short-circuiting OR operation. The following configuration is interpreted as `line1 AND (line2 OR line3)`, where `line3` does not execute if `line2` evaluates as `true` :
+There are also OR/NOR directives, where consecutive lines imply a short-circuiting OR/NOR operation. The following configuration is interpreted as `line1 AND (line2 OR line3)`, where `line3` does not execute if `line2` evaluates as `true` :
 ```
 line1
 or {

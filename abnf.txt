@@ -3,7 +3,7 @@
 # or-sequence  = (and-sequence/procedure-decl) *(1*CRLF (otherwise-directive / and-sequence / procedure-decl))
 # and-sequence = *(directive CRLF)
 #
-# directive = ["NOT"] predicate / action / group-directive / or-directive
+# directive = ["NOT"] predicate / action / group-directive / or-directive / nor-directive
 # group-directive = "{" or-sequence "}"
 # 
 # predicate =  <header> ":"[operator] <value>
@@ -29,6 +29,7 @@
 # type                = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # or-directive        = "or" "{" 1*(directive CRLF) "}"
+# nor-directive       = "nor" "{" 1*(directive CRLF) "}"
 # otherwise-directive = "otherwise" directive
 #
 # macro-token     = *( macro-expand / macro-literal / macro-escape)

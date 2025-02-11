@@ -118,6 +118,39 @@ public class ParserTest {
   }
 
   @Test
+  public void testScanNorDirective() {
+    assertThat(assertThrows(RuntimeParserException.class, () -> {
+      parser("nor {}").scanNorDirective();
+    }).getMessage(), containsString("Expected directive;"));
+  }
+
+  @Test
+  public void testScanNorDirective1() {
+    var d = parser("nor\n{\n drop\n }").scanNorDirective();
+    assertThat(d, isA(NorDirective.class.asSubclass(Directive.class)));
+    var dd = ((NorDirective) d).getDirectives();
+    assertThat(dd, hasSize(1));
+    assertThat(dd.get(0), isADropAction());
+    assertThat(parser("nor {\ndrop\n}").scanNorDirective(), is(d));
+    assertThat(parser("nor {drop\n}").scanNorDirective(), is(d));
+    assertThat(parser("nor{drop\n}").scanNorDirective(), is(d));
+    assertThat(parser("nor{drop\n}").scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanNorDirective2() {
+    var d = parser("nor\n {\n drop\n drop\n }").scanNorDirective();
+    assertThat(d, isA(NorDirective.class.asSubclass(Directive.class)));
+    var dd = ((NorDirective) d).getDirectives();
+    assertThat(dd, hasSize(2));
+    assertThat(dd.get(0), isADropAction());
+    assertThat(dd.get(1), isADropAction());
+    assertThat(parser("nor {\ndrop\ndrop\n}").scanNorDirective(), is(d));
+    assertThat(parser("nor{drop\ndrop\n}").scanNorDirective(), is(d));
+    assertThat(parser("nor{drop\ndrop\n}").scanDirective(), is(d));
+  }
+
+  @Test
   public void testAndSequence0() {
     assertThat(parser("").parseAndSequence(), is(nullValue()));
   }
