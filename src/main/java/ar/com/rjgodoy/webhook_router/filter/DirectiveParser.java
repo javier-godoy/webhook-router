@@ -482,6 +482,10 @@ public class DirectiveParser {
         return new NullPredicate(parseMacroString());
       }
 
+      if (skip("true")) {
+        return TruePredicate.INSTANCE;
+      }
+
       return null;
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);

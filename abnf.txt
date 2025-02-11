@@ -9,6 +9,7 @@
 # predicate =  <header> ":"[operator] <value>
 #           / "$" <json-path> ":"[operator] <value>
 #           / "NULL" <macro-expansion>
+#           / "TRUE"
 # 
 # operator  = "contains"
 #

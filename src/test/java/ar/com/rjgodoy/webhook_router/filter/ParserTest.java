@@ -276,6 +276,14 @@ public class ParserTest {
   }
 
   @Test
+  public void testScanPredicateTrue() {
+    String line = "TRUE";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(TruePredicate.INSTANCE));
+    assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
   public void testScanPredicateInvalid() {
     assertThat(parser("x").scanPredicate(), is(nullValue()));
   }
