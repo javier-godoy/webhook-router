@@ -8,10 +8,12 @@
 # 
 # predicate =  <header> ":"[operator] <value>
 #           / "$" <json-path> ":"[operator] <value>
+#           / "$" <json-path> ":is" <type>
 #           / "NULL" <macro-expansion>
 #           / "TRUE"
 # 
 # operator  = "contains"
+# type                = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # action = "CALL" <name>
 #        / "DROP"
@@ -27,8 +29,6 @@
 # http-method         = "POST" / "GET" / "DELETE"
 # 
 # procedure-decl      = "PROCEDURE" <name> group-directive
-#
-# type                = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # or-directive        = "or" "{" 1*(directive CRLF) "}"
 # nor-directive       = "nor" "{" 1*(directive CRLF) "}"

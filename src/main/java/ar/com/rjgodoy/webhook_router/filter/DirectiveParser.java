@@ -474,7 +474,11 @@ public class DirectiveParser {
         String s = m2.group(1);
         if (!s.contains("..") && !s.endsWith(".") && !s.startsWith(".")) {
           next();
-          return new PayloadPredicate(s, m2.group(3).trim(), parseOperator(m2.group(2)));
+          if ("is".equalsIgnoreCase(m2.group(2))) {
+            return IsPredicate.newInstance(s, m2.group(3).trim());
+          } else {
+            return new PayloadPredicate(s, m2.group(3).trim(), parseOperator(m2.group(2)));
+          }
         }
       }
 

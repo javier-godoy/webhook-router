@@ -107,6 +107,11 @@ If no operator is specified, the predicate does an exact match (certainly, there
 $repository.full_name:contains javier-
 ```
 
+The `is` operator evaluates as true if the payload element is of the corresponding type.
+```
+$repository:is object
+```
+
 A `NULL` predicate evaluates as true if a macro expression is null.
 ```
 NULL ${foo.bar}

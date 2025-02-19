@@ -18,6 +18,7 @@ package ar.com.rjgodoy.webhook_router.filter;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -265,6 +266,29 @@ public class ParserTest {
     var d = parser(line).scanPredicate();
     assertThat(d, is(new PayloadPredicate("foo.bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanIsPredicate() {
+    String line = "$foo.bar:is string";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(notNullValue()));
+    assertThat(d, is(IsPredicate.newInstance("foo.bar", "string")));
+    assertThat(parser(line).scanDirective(), is(d));
+  }
+
+  @Test
+  public void testScanIsPredicateInvalidType() {
+    String line = "$foo.bar:is foo";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(nullValue()));
+  }
+
+  @Test
+  public void testScanIsPredicateNiType() {
+    String line = "$foo.bar:is";
+    var d = parser(line).scanPredicate();
+    assertThat(d, is(nullValue()));
   }
 
   @Test
