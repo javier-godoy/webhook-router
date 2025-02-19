@@ -466,7 +466,9 @@ public class DirectiveParser {
       var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
       if (m1.matches()) {
         next();
-        return new HeaderPredicate(m1.group(1), m1.group(3).trim(), parseOperator(m1.group(2)));
+        return new HeaderPredicate(m1.group(1), 
+            parseMacroString(m1.group(3).trim()),
+            parseOperator(m1.group(2)));
       }
 
       var m2 = PAYLOAD_PREDICATE_PATTERN.matcher(scan());
@@ -477,7 +479,9 @@ public class DirectiveParser {
           if ("is".equalsIgnoreCase(m2.group(2))) {
             return IsPredicate.newInstance(s, m2.group(3).trim());
           } else {
-            return new PayloadPredicate(s, m2.group(3).trim(), parseOperator(m2.group(2)));
+            return new PayloadPredicate(s, 
+                parseMacroString(m2.group(3).trim()),
+                parseOperator(m2.group(2)));
           }
         }
       }

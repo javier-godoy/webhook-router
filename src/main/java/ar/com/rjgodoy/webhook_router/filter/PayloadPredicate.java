@@ -29,11 +29,20 @@ import lombok.RequiredArgsConstructor;
 final class PayloadPredicate implements Directive {
 
   private final String path;
-  private final String value;
+  private final MacroString macro;
   private final PredicateOperator operator;
+
+  public PayloadPredicate(String path, String value, PredicateOperator operator) {
+    this(path, new MacroString(value), operator);
+  }
 
   @Override
   public Result apply(WebHook webhook) {
+    String value = macro.eval(webhook);
+    if (value == null) {
+      System.err.println("Macro expanded to null: " + macro);
+      return Result.FALSE;
+    }
     return Result.of(Optional.ofNullable(webhook.getPayload(path)).map(Object::toString)
         .filter(s1 -> operator.test(s1, value)).isPresent());
   }
@@ -41,6 +50,6 @@ final class PayloadPredicate implements Directive {
   @Override
   public String toString() {
     String op = operator == PredicateOperator.EQ ? "" : operator.toString().toLowerCase();
-    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + op + " " + value;
+    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + op + " " + macro;
   }
 }
