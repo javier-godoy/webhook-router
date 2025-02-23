@@ -17,15 +17,25 @@ package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = false)
@@ -46,6 +56,40 @@ final class GetAction extends HttpMethodAction {
   @Override
   protected String getMethodName() {
     return "GET";
+  }
+
+  @Override
+  protected URI decorateURI(URI uri, WebHook webhook) {
+    JSONObject payload = webhook.getPayload();
+    StringBuilder query = new StringBuilder(Optional.ofNullable(uri.getQuery()).orElse(""));
+    for (Iterator<String> it = payload.keys(); it.hasNext();) {
+      String key = it.next();
+      Object value = payload.get(key);
+      List<Object> values;
+      if (value instanceof JSONArray array) {
+        values = array.toList();
+      } else {
+        values = List.of(value);
+      }
+
+      String encodedKey = URLEncoder.encode(key, StandardCharsets.ISO_8859_1);
+
+      for (Object v : values) {
+        if (!query.isEmpty()) {
+          query.append("&");
+        }
+        query.append(encodedKey).append("=");
+        if (v instanceof Double d) {
+          v = new BigDecimal(d).toPlainString();
+        }
+        query.append(URLEncoder.encode(String.valueOf(v), StandardCharsets.ISO_8859_1));
+      }
+    }
+    try {
+      return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), query.toString(), null);
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   @Override

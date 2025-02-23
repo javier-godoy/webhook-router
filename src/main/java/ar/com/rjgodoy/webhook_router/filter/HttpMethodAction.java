@@ -93,6 +93,10 @@ abstract class HttpMethodAction implements Directive {
     return false;
   }
 
+  protected URI decorateURI(URI uri, WebHook webhook) {
+    return uri;
+  }
+
   private boolean execute(URI uri, WebHook webhook) {
 
     WebHook original = webhook;
@@ -113,7 +117,12 @@ abstract class HttpMethodAction implements Directive {
     }
 
     if (getBody() != null && getBody().apply(webhook) == Result.FALSE) {
+      logError("Failed to apply body");
       return false;
+    }
+
+    if (getBody() != null) {
+      uri = decorateURI(uri, webhook);
     }
 
     HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1)

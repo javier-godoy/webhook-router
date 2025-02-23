@@ -185,6 +185,7 @@ The `POST`, `GET` and `DELETE` actions send HTTP request to the URI specified by
 The optional `INTO` clause specifies a property of the payload that will store the POST response.
 
 The optional `WITH` clause specifies a group directive that will initialize a new request. If `WITH` is not specified and `http-method` is `POST`, the current webhook will be forwarded.
+If `http-method` is `GET`, payload elements will be appended to the query string.
 
 If the `INTO` clause is not specified, the webhook is considered consumed upon if the request is successful.
 In dry mode, as specified by the [DRY action](#dry-action), the request is not sent, but it is still considered consumed.
