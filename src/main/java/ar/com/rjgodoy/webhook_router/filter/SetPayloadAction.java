@@ -38,10 +38,14 @@ final class SetPayloadAction implements Directive {
     int pos = path.lastIndexOf('.');
     JSONObject obj;
     if (pos < 0) {
-      obj = webhook.getPayload();
-      var = path;
+      if (path.startsWith("%")) {
+        obj = new JSONObject();
+      } else {
+        obj = webhook.getPayload();
+      }
+      var = path.substring(1);
     } else {
-      obj = (JSONObject) webhook.getPayload(path.substring(0, pos - 1));
+      obj = (JSONObject) webhook.resolve(path.substring(0, pos - 1));
       var = path.substring(pos + 1);
     }
 
@@ -90,11 +94,14 @@ final class SetPayloadAction implements Directive {
         return Result.FALSE;
     }
 
+    if (path.startsWith("%")) {
+      webhook.context.set(var, obj.get(var));
+    }
     return Result.NULL;
   }
 
   @Override
   public String toString() {
-    return "SET $" + path + ":" + (type != null ? type : "") + " " + macro;
+    return "SET " + path + ":" + (type != null ? type : "") + " " + macro;
   }
 }

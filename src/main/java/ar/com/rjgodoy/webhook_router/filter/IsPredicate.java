@@ -67,13 +67,13 @@ final class IsPredicate implements Directive {
 
   @Override
   public Result apply(WebHook webhook) {
-    return Result.of(typeOf(webhook.getPayload(path)).equals(type));
+    return Result.of(typeOf(webhook.resolve(path)).equals(type));
   }
 
   @Override
   public String toString() {
     String op = "is";
-    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + op + " " + type;
+    return Stream.of(path).collect(Collectors.joining(".", "", ":")) + op + " " + type;
   }
 
 }

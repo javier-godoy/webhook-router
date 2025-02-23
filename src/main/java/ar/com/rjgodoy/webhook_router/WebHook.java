@@ -58,7 +58,7 @@ public class WebHook {
         () -> headers.add(new Header(name,value)));
   }
 
-  public Object getPayload(String expansion) {
+  private Object getPayload(String expansion) {
     String ss[] = expansion.split("\\.");
     JSONObject obj = payload;
     int n = ss.length - 1;
@@ -72,6 +72,17 @@ public class WebHook {
       return null;
     } else {
       return obj.get(ss[n]);
+    }
+  }
+
+  public Object resolve(String expression) {
+    switch (expression.charAt(0)) {
+      case '$':
+        return getPayload(expression.substring(1));
+      case '%':
+        return getContext().get(expression.substring(1));
+      default:
+        return getHeader(expression).orElse(null);
     }
   }
 

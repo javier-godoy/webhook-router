@@ -33,15 +33,15 @@ final class ForAction implements Directive {
 
   @Override
   public Result apply(WebHook webhook) {
-    Object obj = webhook.getPayload(arrayName);
+    Object obj = webhook.resolve(arrayName);
     if (obj instanceof JSONArray array) {
       int n = array.length();
       for (int i = 0; i < n; i++) {
-        webhook.context.set(variable, array.get(i));
+        webhook.context.set("%" + variable, array.get(i));
         try {
           body.apply(webhook);
         } finally {
-          webhook.context.unset(variable);
+          webhook.context.unset("%" + variable);
         }
       }
       return Result.NULL;
@@ -59,6 +59,6 @@ final class ForAction implements Directive {
     } else {
       str = ToStringHelper.pad(str);
     }
-    return "FOR " + variable + " IN $" + arrayName + " " + str;
+    return "FOR " + variable + " IN " + arrayName + " " + str;
   }
 }

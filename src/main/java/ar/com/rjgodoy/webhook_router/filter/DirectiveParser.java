@@ -466,7 +466,7 @@ public class DirectiveParser {
       var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
       if (m1.matches()) {
         next();
-        return new HeaderPredicate(m1.group(1), 
+        return new HeaderPredicate(m1.group(1),
             parseMacroString(m1.group(3).trim()),
             parseOperator(m1.group(2)));
       }
@@ -479,7 +479,7 @@ public class DirectiveParser {
           if ("is".equalsIgnoreCase(m2.group(2))) {
             return IsPredicate.newInstance(s, m2.group(3).trim());
           } else {
-            return new PayloadPredicate(s, 
+            return new PayloadPredicate(s,
                 parseMacroString(m2.group(3).trim()),
                 parseOperator(m2.group(2)));
           }
@@ -638,37 +638,36 @@ public class DirectiveParser {
       }  while(false);
     }
     return new LogAction(parseMacroString());
-
-
   }
 
 
   private Directive parseForAction() {
-    // "FOR" <variable> "IN" "$" <json-path> <group>
+    // "FOR" <variable> "IN" <json-path> <group>
     String variable = token();
     if (!skip("IN")) {
       throw new RuntimeParserException(lineNumber, "Expected FOR variable IN ...");
     }
     String expression = token();
-    if (!expression.matches("\\$[\\w\\.]+")) {
+    var m = Pattern.compile("(\\$|%|%%)([\\w\\.]+)").matcher(expression);
+    if (!m.matches()) {
       throw new RuntimeParserException(lineNumber, "Expected FOR variable IN <json-path>");
     }
     Directive body = scanGroup();
     if (body == null) {
-      throw new RuntimeParserException(lineNumber, "Expected FOR variable IN <json-path> { ... }");
+      throw new RuntimeParserException(lineNumber, "Expected FOR variablce IN <json-path> { ... }");
     }
-    return new ForAction(variable, expression.substring(1), body);
+    return new ForAction(variable, expression, body);
   }
 
   private final static Pattern HEADER_PREDICATE_PATTERN = Pattern.compile("([\\w-]+):(\\w+)?(.*)");
   private final static Pattern PAYLOAD_PREDICATE_PATTERN =
-      Pattern.compile("\\$([\\w\\.]+):(\\w+)?(.*)");
+      Pattern.compile("((?:\\$|%|%%)[\\w\\.]+):(\\w+)?(.*)");
   private final static Pattern SET_HEADER_PATTERN = Pattern.compile("[\\w-]+:.*");
   private final static Pattern SET_PAYLOAD_PATTERN = PAYLOAD_PREDICATE_PATTERN;
 
   private Directive parseSetAction() {
     // "SET" <header> ":" <macro-string>
-    // "SET" "$"<json-path> ":"[type] <macro-string>
+    // "SET" <json-path> ":"[type] <macro-string>
 
     var m1 = SET_HEADER_PATTERN.matcher(scan());
     if (m1.matches()) {

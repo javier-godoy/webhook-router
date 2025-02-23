@@ -91,33 +91,45 @@ otherwise line2
 line3
 ```
 
+#### Payload elements and variables
+
+Payload elements are identified by a `$` prefix (e.g. `${repository.full_name}`).
+
+Global variables are identified by a `%` prefix.
+
+Local variables are identified by a `%%` prefix. A local variable is scoped to the or-sequence (i.e. brace) where it's defined.
+
 #### Predicates
-A predicate examines the value of a request header or payload element. 
-The result is true if the predicate matches and false otherwise. 
-Payload predicates are identified by a $ prefix.
+A predicate examines the value of a request header, variable or payload element. 
+The result is true if the predicate matches and false otherwise.
 
 ```
 X-GitHub-Event: ping
 $repository.full_name: javier-godoy/webhook-router
+%foo: bar
 ```
 
 The `contains` operator can be specified immediately after the colon.
 If no operator is specified, the predicate does an exact match (certainly, there is room for improvement here).
+
 ```
 $repository.full_name:contains javier-
 ```
 
 The `is` operator evaluates as true if the payload element is of the corresponding type.
+
 ```
 $repository:is object
 ```
 
 A `NULL` predicate evaluates as true if a macro expression is null.
+
 ```
 NULL ${foo.bar}
 ```
 
-A `TRUE` predicate alwats evaluates as true
+A `TRUE` predicate always evaluates as true
+
 ```
 TRUE
 ```
@@ -147,7 +159,7 @@ LOG ${env.HOSTNAME}
 ```
 #### PROCEDURE declaration
 
-A `PROCEDURE` declaration introduces a new procedure within the scope of an or sequence.
+A `PROCEDURE` declaration introduces a new procedure within the scope of an or-sequence.
 
 ```
 CALL foo

@@ -256,7 +256,7 @@ public class ParserTest {
   public void testScanPredicatePayload() {
     String line = "$foo.bar: x ";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new PayloadPredicate("foo.bar", "x", PredicateOperator.EQ)));
+    assertThat(d, is(new PayloadPredicate("$foo.bar", "x", PredicateOperator.EQ)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -264,7 +264,7 @@ public class ParserTest {
   public void testScanPredicatePayloadWithOperator() {
     String line = "$foo.bar:contains x ";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new PayloadPredicate("foo.bar", "x", PredicateOperator.CONTAINS)));
+    assertThat(d, is(new PayloadPredicate("$foo.bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -273,7 +273,7 @@ public class ParserTest {
     String line = "$foo.bar:is string";
     var d = parser(line).scanPredicate();
     assertThat(d, is(notNullValue()));
-    assertThat(d, is(IsPredicate.newInstance("foo.bar", "string")));
+    assertThat(d, is(IsPredicate.newInstance("$foo.bar", "string")));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -475,7 +475,7 @@ public class ParserTest {
     var d = parser(line).scanAction();
     assertThat(d, isA(ForAction.class.asSubclass(Directive.class)));
     assertThat(((ForAction) d).getVariable(), is("var"));
-    assertThat(((ForAction) d).getArrayName(), is("payload.array"));
+    assertThat(((ForAction) d).getArrayName(), is("$payload.array"));
     assertThat(((ForAction) d).getBody(), isADropAction());
   }
 
@@ -679,8 +679,8 @@ public class ParserTest {
                 List.<Directive>of(new AndSequence(
                     List.<Directive>of(
                         new SetHeaderAction("X-Foo", new MacroString("foo")),
-                        new SetPayloadAction("bar", null, new MacroString("bar")),
-                        new SetPayloadAction("baz", "string", new MacroString("baz"))
+                        new SetPayloadAction("$bar", null, new MacroString("bar")),
+                        new SetPayloadAction("$baz", "string", new MacroString("baz"))
                     )))))
             .build()));
   }

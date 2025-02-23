@@ -7,24 +7,26 @@
 # group-directive = "{" or-sequence "}"
 # 
 # predicate =  <header> ":"[operator] <macro-string>
-#           / "$" <json-path> ":"[operator] <macro-string>
-#           / "$" <json-path> ":is" <type>
+#           / <json-path> ":"[operator] <macro-string>
+#           / <json-path> ":is" <type>
 #           / "NULL" <macro-string>
 #           / "TRUE"
 # 
+# json-path = ["$"/"%"/"%%"] 0*(1*(ALPHA / DIGIT / "_") ".") 1*(ALPHA / DIGIT / "_")
+#
 # operator  = "contains"
-# type                = "string" / "number" / "boolean" / "array" / "object" / "null"
+# type      = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # action = "CALL" <name>
 #        / "DROP"
 #        / "DRY"
 #        / "EXIT"
 #        / "LOG" <macro-string> ["&&"]; double ampersand in macro-string must be escaped
-#        / <http-method> <macro-token> ["INTO" $<json-path>] ["WITH" group-directive]; token must expand to an absolute-URI
-#        / "FOR" <variable> "IN" "$" <json-path> <group-directive>
+#        / <http-method> <macro-token> ["INTO" <json-path>] ["WITH" group-directive]; token must expand to an absolute-URI
+#        / "FOR" <variable> "IN" <json-path> <group-directive>
 #        / "REENTER [COPY]"
 #        / "SET" <header> ":" <macro-string>
-#        / "SET" "$"<json-path> ":"[type] <macro-string>
+#        / "SET" <json-path> ":"[type] <macro-string>
 #
 # http-method         = "POST" / "GET" / "DELETE"
 # 

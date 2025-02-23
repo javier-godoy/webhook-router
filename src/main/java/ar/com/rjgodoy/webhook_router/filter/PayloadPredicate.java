@@ -43,13 +43,13 @@ final class PayloadPredicate implements Directive {
       System.err.println("Macro expanded to null: " + macro);
       return Result.FALSE;
     }
-    return Result.of(Optional.ofNullable(webhook.getPayload(path)).map(Object::toString)
+    return Result.of(Optional.ofNullable(webhook.resolve(path)).map(Object::toString)
         .filter(s1 -> operator.test(s1, value)).isPresent());
   }
 
   @Override
   public String toString() {
     String op = operator == PredicateOperator.EQ ? "" : operator.toString().toLowerCase();
-    return Stream.of(path).collect(Collectors.joining(".", "$", ":")) + op + " " + macro;
+    return Stream.of(path).collect(Collectors.joining(".", "", ":")) + op + " " + macro;
   }
 }

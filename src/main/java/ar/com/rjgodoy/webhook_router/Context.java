@@ -82,6 +82,23 @@ public class Context {
     variables.remove(name);
   }
 
+  public class LocalScope implements AutoCloseable {
+    private final Set<String> names;
+
+    private LocalScope() {
+      names = new HashSet<>(variables.keySet());
+    }
+
+    @Override
+    public void close() {
+      variables.keySet().removeIf(name -> name.startsWith("%") && !names.contains(name));
+    }
+  }
+
+  public LocalScope newLocalScope() {
+    return new LocalScope();
+  }
+
   public Object get(String name) {
     String ss[] = name.split("\\.");
 
@@ -100,7 +117,6 @@ public class Context {
       return obj.get(ss[n]);
     }
   }
-
 
   public boolean reenter(WebHook webhook, Directive directive) {
     if (parent != null && parent.reenter.contains(directive)) {

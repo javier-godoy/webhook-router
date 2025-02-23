@@ -36,11 +36,13 @@ final class OrSequence extends LogicalDirective {
     procedures().forEach(webhook.context::declare);
 
     Result result = Result.NULL;
-    for (Directive directive : directives) {
-      if (result == Result.TRUE && directive instanceof OtherwiseDirective) {
-        continue;
+    try (var scope = webhook.context.newLocalScope()) {
+      for (Directive directive : directives) {
+        if (result == Result.TRUE && directive instanceof OtherwiseDirective) {
+          continue;
+        }
+        result = result.or(directive.apply(webhook));
       }
-      result = result.or(directive.apply(webhook));
     }
 
     procedures().forEach(webhook.context::undeclare);

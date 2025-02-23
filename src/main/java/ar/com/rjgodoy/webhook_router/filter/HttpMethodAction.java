@@ -99,8 +99,8 @@ abstract class HttpMethodAction implements Directive {
         }
 
         @Override
-        public Object getPayload(String expansion) {
-          return original.getPayload(expansion);
+        public Object resolve(String expansion) {
+          return original.resolve(expansion);
         }
       };
 
