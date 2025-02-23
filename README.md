@@ -184,7 +184,7 @@ The `POST`, `GET` and `DELETE` actions send HTTP request to the URI specified by
 
 The optional `INTO` clause specifies a property of the payload that will store the POST response.
 
-The optional `WITH` clause specifies a group directive that will initialize a new request. If `WITH` is not specified, the current webhook will be forwarded.
+The optional `WITH` clause specifies a group directive that will initialize a new request. If `WITH` is not specified and `http-method` is `POST`, the current webhook will be forwarded.
 
 If the `INTO` clause is not specified, the webhook is considered consumed upon if the request is successful.
 In dry mode, as specified by the [DRY action](#dry-action), the request is not sent, but it is still considered consumed.
@@ -192,7 +192,7 @@ In dry mode, as specified by the [DRY action](#dry-action), the request is not s
 This action returns `true` if the request is successful (indicated by a response status code in the 2xx range) or a JSON response (with any status code) was captured `INTO` a variable.
 
 TODO: store the response INTO a context variable instead of payload.
-TODO: only forward request for POST
+TODO: `<http-method> ["COPY"]`
 
 #### DROP action
 

@@ -89,11 +89,15 @@ abstract class HttpMethodAction implements Directive {
       WebHook webhook)
       throws IOException, InterruptedException;
 
+  protected boolean forwardCurrentWebhook() {
+    return false;
+  }
+
   private boolean execute(URI uri, WebHook webhook) {
 
     WebHook original = webhook;
 
-    if (getBody() != null) {
+    if (!forwardCurrentWebhook()) {
       webhook = new WebHook(webhook.context) {
         // MacroExpansion resolves against the original webhook
         @Override
@@ -106,10 +110,10 @@ abstract class HttpMethodAction implements Directive {
           return original.resolve(expansion);
         }
       };
+    }
 
-      if (getBody().apply(webhook) == Result.FALSE) {
-        return false;
-      }
+    if (getBody() != null && getBody().apply(webhook) == Result.FALSE) {
+      return false;
     }
 
     HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1)
