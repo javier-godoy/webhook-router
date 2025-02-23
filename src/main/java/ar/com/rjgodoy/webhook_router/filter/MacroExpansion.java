@@ -16,6 +16,7 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
+import java.math.BigDecimal;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +40,9 @@ final class MacroExpansion implements MacroStringPart {
     }
     if (value == null) {
       value = webhook.getHeader(expansion).orElse(null);
+    }
+    if (value instanceof Double d) {
+      value = new BigDecimal(d).toPlainString();
     }
     if (value != null) {
       value = value.toString();
