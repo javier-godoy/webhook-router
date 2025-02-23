@@ -58,6 +58,12 @@ final class GetAction extends HttpMethodAction {
     return "GET";
   }
 
+  private static String encode(String s) {
+    return URLEncoder.encode(s, StandardCharsets.ISO_8859_1)
+        .replace("%2F", "/")
+        .replace("%3F", "?");
+  }
+
   @Override
   protected URI decorateURI(URI uri, WebHook webhook) {
     JSONObject payload = webhook.getPayload();
@@ -72,7 +78,7 @@ final class GetAction extends HttpMethodAction {
         values = List.of(value);
       }
 
-      String encodedKey = URLEncoder.encode(key, StandardCharsets.ISO_8859_1);
+      String encodedKey = encode(key);
 
       for (Object v : values) {
         if (!query.isEmpty()) {
@@ -82,7 +88,7 @@ final class GetAction extends HttpMethodAction {
         if (v instanceof Double d) {
           v = new BigDecimal(d).toPlainString();
         }
-        query.append(URLEncoder.encode(String.valueOf(v), StandardCharsets.ISO_8859_1));
+        query.append(encode(String.valueOf(v)));
       }
     }
     try {
