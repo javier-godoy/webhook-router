@@ -57,6 +57,9 @@ abstract class HttpMethodAction implements Directive {
       logError("Macro expanded to null: " + getMacro());
       return Result.FALSE;
     }
+    if (location.matches("\\w+::.*")) {
+      location = location.replaceFirst("::", "://");
+    }
     URI uri;
     try {
       uri = new URI(location);
