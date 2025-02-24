@@ -3,7 +3,7 @@
 # or-sequence  = (and-sequence/procedure-decl) *(1*CRLF (otherwise-directive / and-sequence / procedure-decl))
 # and-sequence = *(directive CRLF)
 #
-# directive = ["NOT"] predicate / action / group-directive / or-directive / nor-directive
+# directive = ["NOT"] predicate / action / group-directive / or-directive / nor-directive / case-directive
 # group-directive = "{" or-sequence "}"
 # 
 # predicate =  <header> ":"[operator] <macro-string>
@@ -27,6 +27,10 @@
 #        / "REENTER [COPY]"
 #        / "SET" <header> ":" <macro-string>
 #        / "SET" <json-path> ":"[type] <macro-string>
+#
+# case-directive = "CASE" CRLF 1*(when-clause CRLF) [else-clause CRLF] "ESAC" CRLF
+# when-clause    = "WHEN" and-sequence "THEN" and-sequence
+# else-clause    = "ELSE" and-sequence
 #
 # http-method         = "POST" / "GET" / "DELETE"
 # 

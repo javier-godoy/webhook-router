@@ -134,6 +134,29 @@ A `TRUE` predicate always evaluates as true
 TRUE
 ```
 
+#### Case directive
+
+The `CASE` directive defines a conditional structure that consists of multiple `WHEN` clause statements (which specify a condition and an associated action), and an optional `ELSE` clause (which defines an alternative action if no when-clause matches). The directive egins with the keyword `CASE` and ends with `ESAC`.
+
+```
+CASE
+  WHEN X-Foo: foo
+  THEN LOG foo
+  WHEN X-Bar: bar
+       X-Baz: baz
+  THEN LOG bar, baz
+  ELSE LOG other
+ESAC
+```
+
+A `CASE` directive executes the first `WHEN` clause that evaluates as true and returns the result of the corresponding actions. If no WHEN clause evaluates as true, the CASE expression returns null.
+
+The `CASE` directive defines a conditional structure consisting of multiple `WHEN` clause statements, each specifying a condition and an associated action, and an optional `ELSE` clause that defines an alternative action if no `WHEN` clause evaluates as true. 
+The directive begins with the keyword `CASE` and ends with `ESAC`. 
+
+A `CASE` directive executes and returns the result of the `THEN` actions corresponding to the first `WHEN` clause which evaluates as true. 
+If no `WHEN` clause evaluates as true, the `ELSE` clause executes if present; otherwise, the `CASE` directive returns null.
+
 #### Macro Strings
 
 Some actions utilize string-valued arguments, which are represented as the concatenation of literal strings (without quotation marks), escape sequences (`\\`, `\$`, `\#`, `\&`), and macro expansions written as `${macro}`. A macro expansion may resolve to a context variable, a request header, or a payload element. Depending on the action, a macro that resolves to an object or array may be coerced to string (e.g. the LOG action) or cause the action to fail (e.g. the POST action)

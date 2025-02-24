@@ -16,6 +16,8 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.Header;
+import ar.com.rjgodoy.webhook_router.filter.CaseDirective.ElseClause;
+import ar.com.rjgodoy.webhook_router.filter.CaseDirective.WhenClause;
 import ar.com.rjgodoy.webhook_router.filter.HttpMethodAction.HttpMethodActionBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -320,7 +322,14 @@ public class DirectiveParser {
         return directive;
       }
       directive = scanGroup();
-      return directive;
+      if (directive != null) {
+        return directive;
+      }
+      directive = scanCase();
+      if (directive != null) {
+        return directive;
+      }
+      return null;
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
     }
@@ -702,4 +711,36 @@ public class DirectiveParser {
     throw new RuntimeParserException(lineNumber, "Expected <SET action>");
   }
 
+  private Directive scanCase() {
+    int lineNumber = this.lineNumber;
+    try {
+      if (!skip("CASE")) {
+        return null;
+      }
+      List<WhenClause> whenClauses = new ArrayList<>();
+      ElseClause elseClause = null;
+      while (skip("WHEN")) {
+        Directive predicate = parseAndSequence();
+        if (!skip("THEN")) {
+          throw new RuntimeParserException(this.lineNumber, "Expected THEN");
+        }
+        Directive actions = parseAndSequence();
+        whenClauses.add(new WhenClause(predicate, actions));
+      }
+      if (whenClauses.isEmpty()) {
+        throw new RuntimeParserException(this.lineNumber, "Expected WHEN");
+      }
+      if (skip("ELSE")) {
+        Directive actions = parseAndSequence();
+        elseClause = new ElseClause(actions);
+      }
+      if (skip("ESAC")) {
+        return new CaseDirective(whenClauses, elseClause);
+      } else {
+        throw new RuntimeParserException(this.lineNumber, "Expected ESAC");
+      }
+    } catch (RuntimeParserException e) {
+      throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
 }

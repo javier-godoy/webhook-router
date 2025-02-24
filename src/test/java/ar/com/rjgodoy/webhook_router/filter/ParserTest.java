@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import ar.com.rjgodoy.webhook_router.Header;
+import ar.com.rjgodoy.webhook_router.filter.CaseDirective.ElseClause;
+import ar.com.rjgodoy.webhook_router.filter.CaseDirective.WhenClause;
 import java.util.Arrays;
 import java.util.List;
 import org.hamcrest.Matcher;
@@ -683,6 +685,46 @@ public class ParserTest {
                         new SetPayloadAction("$baz", "string", new MacroString("baz"))
                     )))))
             .build()));
+  }
+
+  @Test
+  public void testCase() {
+    var d = parser("""
+        CASE
+            WHEN X-Foo: foo
+            THEN DROP
+        ESAC
+        }""").scanDirective();
+    assertThat(d, isA(CaseDirective.class.asSubclass(Directive.class)));
+    assertThat(d,
+        is(new CaseDirective(
+            List.of(new WhenClause(new HeaderPredicate("X-Foo", "foo", PredicateOperator.EQ), new DropAction())),
+            null)));
+  }
+
+  @Test
+  public void testCase2() {
+    var d = parser("""
+        CASE
+            WHEN X-Foo: foo
+            THEN DROP
+            WHEN X-Bar: bar
+                 X-Baz: baz
+            THEN DROP
+            ELSE DROP
+        ESAC
+        }""").scanDirective();
+    assertThat(d, isA(CaseDirective.class.asSubclass(Directive.class)));
+    assertThat(d,
+        is(new CaseDirective(
+            List.of(
+                new WhenClause(new HeaderPredicate("X-Foo", "foo", PredicateOperator.EQ), new DropAction()),
+                new WhenClause(new AndSequence(List.of(
+                    new HeaderPredicate("X-Bar", "bar", PredicateOperator.EQ),
+                    new HeaderPredicate("X-Baz", "baz", PredicateOperator.EQ)
+                )), new DropAction())
+            ),
+            new ElseClause(new DropAction()))));
   }
 
 }
