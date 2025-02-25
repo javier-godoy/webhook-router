@@ -23,8 +23,11 @@ import lombok.RequiredArgsConstructor;
 
 
 @RequiredArgsConstructor
-@EqualsAndHashCode
-class SecretAction implements Directive {
+@EqualsAndHashCode(exclude = "lineNumber")
+class SecretAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PACKAGE)
   private final MacroString macro;
@@ -35,7 +38,7 @@ class SecretAction implements Directive {
     if (s != null) {
       webhook.context.addSecret(s);
     } else {
-      System.err.println("[SECRET] Macro expanded to null: " + macro);
+      logError("[SECRET] Macro expanded to null: " + macro);
     }
     return Result.NULL;
   }

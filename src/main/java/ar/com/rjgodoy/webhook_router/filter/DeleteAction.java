@@ -28,11 +28,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = "lineNumber")
 @Builder
 final class DeleteAction extends HttpMethodAction {
 
   public final static class DeleteActionBuilder extends HttpMethodActionBuilder<DeleteActionBuilder> {}
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
@@ -152,15 +153,14 @@ public class Context {
     procedures.remove(proc);
   }
 
-  public Result call(WebHook webhook, String procedureName) {
+  public Optional<Result> call(WebHook webhook, String procedureName) {
     for (int i = procedures.size(); i-- > 0;) {
       ProcedureDecl proc = procedures.get(i);
       if (proc.getName().equals(procedureName)) {
-        return proc.call(webhook);
+        return Optional.of(proc.call(webhook));
       }
     }
-    System.err.println("No such procedure: " + procedureName);
-    return Result.FALSE;
+    return Optional.empty();
   }
 
 }

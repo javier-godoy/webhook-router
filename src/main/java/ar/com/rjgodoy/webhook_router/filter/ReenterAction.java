@@ -21,7 +21,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-final class ReenterAction implements Directive {
+final class ReenterAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PACKAGE)
   private final boolean copy;
@@ -34,7 +37,7 @@ final class ReenterAction implements Directive {
 
     try {
       if (!webhook.context.reenter(webhook, this)) {
-        System.err.println("[REENTER] Loop detected");
+        logError("[REENTER] Loop detected");
         return Result.FALSE;
       }
     } catch (ExitActionException e) {

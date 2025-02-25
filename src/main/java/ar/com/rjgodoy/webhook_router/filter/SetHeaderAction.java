@@ -22,9 +22,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = "lineNumber")
 @Getter(AccessLevel.PACKAGE)
-final class SetHeaderAction implements Directive {
+final class SetHeaderAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   protected final String name;
   protected final MacroString macro;
@@ -33,7 +36,7 @@ final class SetHeaderAction implements Directive {
   public Result apply(WebHook webhook) {
     String value = macro.eval(webhook);
     if (value == null) {
-      System.err.println("[SET] Macro expanded to null: " + macro);
+      logError("[SET] Macro expanded to null: " + macro);
       return Result.FALSE;
     }
     webhook.setHeader(name, value);

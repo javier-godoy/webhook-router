@@ -22,7 +22,10 @@ import lombok.Getter;
 
 
 @EqualsAndHashCode
-class LogAction implements Directive {
+class LogAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PACKAGE)
   private final MacroString macro;
@@ -32,11 +35,12 @@ class LogAction implements Directive {
   @Getter(AccessLevel.PACKAGE)
   private final Directive next;
 
-  public LogAction(MacroString macro) {
-    this(macro, null, null);
+  public LogAction(int lineNumber, MacroString macro) {
+    this(lineNumber, macro, null, null);
   }
 
-  public LogAction(MacroString macro1, MacroString macro2, Directive next) {
+  public LogAction(int lineNumber, MacroString macro1, MacroString macro2, Directive next) {
+    this.lineNumber = lineNumber;
     originalMacro = macro1;
     if (macro2 != null) {
       macro = macro1.concat(new MacroString(" ")).concat(macro2);
@@ -55,7 +59,7 @@ class LogAction implements Directive {
       }
       System.out.println(s);
     } else {
-      System.err.println("[LOG] Macro expanded to null: " + macro);
+      logError("[LOG] Macro expanded to null: " + macro);
     }
 
     if (next != null) {

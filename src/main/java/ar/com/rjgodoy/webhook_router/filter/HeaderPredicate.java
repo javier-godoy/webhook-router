@@ -23,15 +23,18 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = "lineNumber")
 @Getter(AccessLevel.PACKAGE)
-final class HeaderPredicate implements Directive {
+final class HeaderPredicate implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   private final String name;
   private final MacroString macro;
 
-  public HeaderPredicate(String path, String value, PredicateOperator operator) {
-    this(path, new MacroString(value), operator);
+  public HeaderPredicate(int lineNumber, String path, String value, PredicateOperator operator) {
+    this(lineNumber, path, new MacroString(value), operator);
   }
 
   @NonNull
@@ -41,7 +44,7 @@ final class HeaderPredicate implements Directive {
   public Result apply(WebHook webhook) {
     String value = macro.eval(webhook);
     if (value == null) {
-      System.err.println("Macro expanded to null: " + macro);
+      logError("Macro expanded to null: " + macro);
       return Result.FALSE;
     }
     return Result.of(webhook.getHeader(name).filter(s1 -> operator.test(s1, value)).isPresent());

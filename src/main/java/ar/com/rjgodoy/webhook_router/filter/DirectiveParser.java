@@ -475,7 +475,8 @@ public class DirectiveParser {
       var m1 = HEADER_PREDICATE_PATTERN.matcher(scan());
       if (m1.matches()) {
         next();
-        return new HeaderPredicate(m1.group(1),
+        return new HeaderPredicate(lineNumber,
+            m1.group(1),
             parseMacroString(m1.group(3).trim()),
             parseOperator(m1.group(2)));
       }
@@ -488,7 +489,7 @@ public class DirectiveParser {
           if ("is".equalsIgnoreCase(m2.group(2))) {
             return IsPredicate.newInstance(s, m2.group(3).trim());
           } else {
-            return new PayloadPredicate(s,
+            return new PayloadPredicate(lineNumber, s,
                 parseMacroString(m2.group(3).trim()),
                 parseOperator(m2.group(2)));
           }
@@ -526,7 +527,7 @@ public class DirectiveParser {
         case "CALL":
           // action = "CALL" <name>
           skip(line);
-          return new CallAction(token());
+          return new CallAction(lineNumber, token());
         case "DROP":
           skip(line);
           assertEndOfLine();
@@ -577,22 +578,22 @@ public class DirectiveParser {
             case "DELETE" -> DeleteAction.builder();
             default -> throw new AssertionError();
           };
-          return builder.macro(location).into(into).body(body).build();
+          return builder.macro(location).into(into).body(body).lineNumber(lineNumber).build();
         }
         case "REENTER": {
           // action = "REENTER" ["COPY"]
           skip(line);
           if (next != null && skip("COPY")) {
-            return new ReenterAction(true);
+            return new ReenterAction(lineNumber, true);
           } else {
             assertEndOfLine();
-            return new ReenterAction(false);
+            return new ReenterAction(lineNumber, false);
           }
         }
         case "SECRET":
           // action = "SECRET" <macro-string>
           skip(line);
-          return new SecretAction(parseMacroString());
+          return new SecretAction(lineNumber, parseMacroString());
         case "SET":
           skip(line);
           return parseSetAction();
@@ -643,10 +644,10 @@ public class DirectiveParser {
         if (directive == null) {
           throw new RuntimeParserException(lineNumber, "Action expected");
         }
-        return new LogAction(macro1, macro2, directive);
+        return new LogAction(lineNumber, macro1, macro2, directive);
       }  while(false);
     }
-    return new LogAction(parseMacroString());
+    return new LogAction(lineNumber, parseMacroString());
   }
 
 
@@ -665,7 +666,7 @@ public class DirectiveParser {
     if (body == null) {
       throw new RuntimeParserException(lineNumber, "Expected FOR variablce IN <json-path> { ... }");
     }
-    return new ForAction(variable, expression, body);
+    return new ForAction(lineNumber, variable, expression, body);
   }
 
   private final static Pattern HEADER_PREDICATE_PATTERN = Pattern.compile("([\\w-]+):(\\w+)?(.*)");
@@ -682,7 +683,7 @@ public class DirectiveParser {
     if (m1.matches()) {
       Header h = new Header(next().trim());
       MacroString macro = parseMacroString(h.value());
-      return new SetHeaderAction(h.name(), macro);
+      return new SetHeaderAction(lineNumber, h.name(), macro);
     }
 
     var m2 = SET_PAYLOAD_PATTERN.matcher(scan());
@@ -700,7 +701,7 @@ public class DirectiveParser {
           case "array":;
           case "object":
             next();
-            return new SetPayloadAction(s, type, macro);
+            return new SetPayloadAction(lineNumber, s, type, macro);
           default:
             throw new RuntimeParserException(lineNumber,
                 "Expected 'string', 'number', 'boolean', 'array', 'object', 'null'");

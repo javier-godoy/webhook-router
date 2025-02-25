@@ -29,7 +29,7 @@ import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-abstract class HttpMethodAction implements Directive {
+abstract class HttpMethodAction implements Directive, HasLineNumber {
 
   protected abstract MacroString getMacro();
 
@@ -45,6 +45,8 @@ abstract class HttpMethodAction implements Directive {
     public abstract T into(String value);
 
     public abstract T body(Directive value);
+
+    public abstract T lineNumber(int lineNumber);
 
     public abstract HttpMethodAction build();
   }
@@ -187,8 +189,9 @@ abstract class HttpMethodAction implements Directive {
     }
   }
 
-  protected final void logError(String msg) {
-    System.err.println("[" + getMethodName() + "] " + msg);
+  @Override
+  public final void logError(String msg) {
+    HasLineNumber.super.logError("[" + getMethodName() + "] " + msg);
   }
 
   @Override

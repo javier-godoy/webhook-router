@@ -17,19 +17,26 @@ package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @EqualsAndHashCode
 @RequiredArgsConstructor
-final class CallAction implements Directive {
+final class CallAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   @NonNull
   private final String procedure;
 
   @Override
   public Result apply(WebHook webhook) {
-    return webhook.context.call(webhook, procedure);
+    return webhook.context.call(webhook, procedure).orElseGet(() -> {
+      logError("[CALL] No such procedure: " + procedure);
+      return Result.FALSE;
+    });
   }
 
   @Override

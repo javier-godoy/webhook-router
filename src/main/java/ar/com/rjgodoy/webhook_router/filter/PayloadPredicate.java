@@ -24,23 +24,26 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = "lineNumber")
 @Getter
-final class PayloadPredicate implements Directive {
+final class PayloadPredicate implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   private final String path;
   private final MacroString macro;
   private final PredicateOperator operator;
 
-  public PayloadPredicate(String path, String value, PredicateOperator operator) {
-    this(path, new MacroString(value), operator);
+  public PayloadPredicate(int lineNumber, String path, String value, PredicateOperator operator) {
+    this(lineNumber, path, new MacroString(value), operator);
   }
 
   @Override
   public Result apply(WebHook webhook) {
     String value = macro.eval(webhook);
     if (value == null) {
-      System.err.println("Macro expanded to null: " + macro);
+      logError("Macro expanded to null: " + macro);
       return Result.FALSE;
     }
     return Result.of(Optional.ofNullable(webhook.resolve(path)).map(Object::toString)

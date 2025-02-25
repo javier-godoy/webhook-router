@@ -23,9 +23,12 @@ import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 
 @RequiredArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = "lineNumber")
 @Getter(AccessLevel.PACKAGE)
-final class SetPayloadAction implements Directive {
+final class SetPayloadAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   private final String path;
   private final String type;
@@ -51,7 +54,7 @@ final class SetPayloadAction implements Directive {
 
     String value = macro.eval(webhook);
     if (value == null) {
-      System.err.println("[SET] Macro expanded to null: " + macro);
+      logError("[SET] Macro expanded to null: " + macro);
       return Result.FALSE;
     }
 

@@ -25,7 +25,10 @@ import org.json.JSONArray;
 @RequiredArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @Getter(AccessLevel.PACKAGE)
-final class ForAction implements Directive {
+final class ForAction implements Directive, HasLineNumber {
+
+  @Getter
+  private final int lineNumber;
 
   private final String variable;
   private final String arrayName;
@@ -46,7 +49,7 @@ final class ForAction implements Directive {
       }
       return Result.NULL;
     } else {
-      System.err.println("[FOR] " + arrayName + " is not an array");
+      logError("[FOR] " + arrayName + " is not an array");
       return Result.FALSE;
     }
   }

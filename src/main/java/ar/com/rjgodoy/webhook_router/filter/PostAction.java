@@ -29,11 +29,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = "lineNumber")
 @Builder
 final class PostAction extends HttpMethodAction {
 
   public final static class PostActionBuilder extends HttpMethodActionBuilder<PostActionBuilder> {}
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;

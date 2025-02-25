@@ -38,11 +38,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = "lineNumber")
 @Builder
 final class GetAction extends HttpMethodAction {
 
   public final static class GetActionBuilder extends HttpMethodActionBuilder<GetActionBuilder> {}
+
+  @Getter
+  private final int lineNumber;
 
   @Getter(AccessLevel.PROTECTED)
   private final MacroString macro;

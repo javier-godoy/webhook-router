@@ -242,7 +242,7 @@ public class ParserTest {
     String line = "x-foo-bar: x";
     var d = parser(line).scanPredicate();
     Header h = new Header(line);
-    assertThat(d, is(new HeaderPredicate(h.name(), h.value(), PredicateOperator.EQ)));
+    assertThat(d, is(new HeaderPredicate(0, h.name(), h.value(), PredicateOperator.EQ)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -250,7 +250,7 @@ public class ParserTest {
   public void testScanPredicateHeaderWithOperator() {
     String line = "x-foo-bar:contains x";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new HeaderPredicate("x-foo-bar", "x", PredicateOperator.CONTAINS)));
+    assertThat(d, is(new HeaderPredicate(0, "x-foo-bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -258,7 +258,7 @@ public class ParserTest {
   public void testScanPredicatePayload() {
     String line = "$foo.bar: x ";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new PayloadPredicate("$foo.bar", "x", PredicateOperator.EQ)));
+    assertThat(d, is(new PayloadPredicate(0, "$foo.bar", "x", PredicateOperator.EQ)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -266,7 +266,7 @@ public class ParserTest {
   public void testScanPredicatePayloadWithOperator() {
     String line = "$foo.bar:contains x ";
     var d = parser(line).scanPredicate();
-    assertThat(d, is(new PayloadPredicate("$foo.bar", "x", PredicateOperator.CONTAINS)));
+    assertThat(d, is(new PayloadPredicate(0, "$foo.bar", "x", PredicateOperator.CONTAINS)));
     assertThat(parser(line).scanDirective(), is(d));
   }
 
@@ -625,7 +625,7 @@ public class ParserTest {
   public void testCall() {
     var d = parser("call foo").scanAction();
     assertThat(d, isA(CallAction.class.asSubclass(Directive.class)));
-    assertThat(d, is(new CallAction("foo")));
+    assertThat(d, is(new CallAction(0, "foo")));
   }
 
   @Test
@@ -680,9 +680,9 @@ public class ParserTest {
             .body(new OrSequence(
                 List.<Directive>of(new AndSequence(
                     List.<Directive>of(
-                        new SetHeaderAction("X-Foo", new MacroString("foo")),
-                        new SetPayloadAction("$bar", null, new MacroString("bar")),
-                        new SetPayloadAction("$baz", "string", new MacroString("baz"))
+                        new SetHeaderAction(0, "X-Foo", new MacroString("foo")),
+                        new SetPayloadAction(0, "$bar", null, new MacroString("bar")),
+                        new SetPayloadAction(0, "$baz", "string", new MacroString("baz"))
                     )))))
             .build()));
   }
@@ -698,7 +698,7 @@ public class ParserTest {
     assertThat(d, isA(CaseDirective.class.asSubclass(Directive.class)));
     assertThat(d,
         is(new CaseDirective(
-            List.of(new WhenClause(new HeaderPredicate("X-Foo", "foo", PredicateOperator.EQ), new DropAction())),
+            List.of(new WhenClause(new HeaderPredicate(0, "X-Foo", "foo", PredicateOperator.EQ), new DropAction())),
             null)));
   }
 
@@ -718,10 +718,10 @@ public class ParserTest {
     assertThat(d,
         is(new CaseDirective(
             List.of(
-                new WhenClause(new HeaderPredicate("X-Foo", "foo", PredicateOperator.EQ), new DropAction()),
+                new WhenClause(new HeaderPredicate(0, "X-Foo", "foo", PredicateOperator.EQ), new DropAction()),
                 new WhenClause(new AndSequence(List.of(
-                    new HeaderPredicate("X-Bar", "bar", PredicateOperator.EQ),
-                    new HeaderPredicate("X-Baz", "baz", PredicateOperator.EQ)
+                    new HeaderPredicate(0, "X-Bar", "bar", PredicateOperator.EQ),
+                    new HeaderPredicate(0, "X-Baz", "baz", PredicateOperator.EQ)
                 )), new DropAction())
             ),
             new ElseClause(new DropAction()))));
