@@ -511,7 +511,7 @@ public class DirectiveParser {
   }
 
   private PredicateOperator parseOperator(String s) {
-    return switch (Optional.ofNullable(s).orElse("")) {
+    return switch (Optional.ofNullable(s).orElse("").toLowerCase()) {
       case "" -> PredicateOperator.EQ;
       case "contains" -> PredicateOperator.CONTAINS;
       case "startswith" -> PredicateOperator.STARTSWITH;
