@@ -514,7 +514,9 @@ public class DirectiveParser {
     return switch (Optional.ofNullable(s).orElse("")) {
       case "" -> PredicateOperator.EQ;
       case "contains" -> PredicateOperator.CONTAINS;
-      default -> throw new RuntimeParserException(lineNumber, "Expected ':', ':contains'");
+      case "startswith" -> PredicateOperator.STARTSWITH;
+      default -> throw new RuntimeParserException(lineNumber,
+          "Expected ':', ':contains', ':startswith'");
     };
   }
 

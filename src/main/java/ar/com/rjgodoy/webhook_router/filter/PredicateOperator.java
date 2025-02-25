@@ -15,6 +15,13 @@ enum PredicateOperator {
     boolean test(String s1, String s2) {
       return s1.contains(s2);
     }
+  },
+
+  STARTSWITH {
+    @Override
+    boolean test(String s1, String s2) {
+      return s1.startsWith(s2);
+    }
   };
 
   abstract boolean test(String s1, String s2);

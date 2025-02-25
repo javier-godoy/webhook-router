@@ -109,7 +109,7 @@ $repository.full_name: javier-godoy/webhook-router
 %foo: bar
 ```
 
-The `contains` operator can be specified immediately after the colon.
+The `contains` or `startswith` operators can be specified immediately after the colon.
 If no operator is specified, the predicate does an exact match (certainly, there is room for improvement here).
 
 ```

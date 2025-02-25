@@ -14,7 +14,7 @@
 # 
 # json-path = ["$"/"%"/"%%"] 0*(1*(ALPHA / DIGIT / "_") ".") 1*(ALPHA / DIGIT / "_")
 #
-# operator  = "contains"
+# operator  = "contains" / "startswith"
 # type      = "string" / "number" / "boolean" / "array" / "object" / "null"
 #
 # action = "CALL" <name>
