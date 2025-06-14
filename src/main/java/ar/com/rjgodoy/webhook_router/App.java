@@ -15,13 +15,18 @@
  */
 package ar.com.rjgodoy.webhook_router;
 
+import ar.com.rjgodoy.webhook_router.filter.AndSequence;
 import ar.com.rjgodoy.webhook_router.filter.Directive;
 import ar.com.rjgodoy.webhook_router.filter.DirectiveParser;
 import ar.com.rjgodoy.webhook_router.filter.ExitActionException;
+import ar.com.rjgodoy.webhook_router.filter.OrSequence;
+import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
+import ar.com.rjgodoy.webhook_router.filter.QueueDecl;
 import java.io.File;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -79,8 +84,34 @@ public class App
     }
 
     Directive config = null;
+    List<ProcedureDecl> procedures = new ArrayList<>();
+    List<QueueDecl> queueDecls = new ArrayList<>();
+
     if (command.hasOption("config")) {
       config = parseDirectives(command.getOptionValue("config"));
+
+      // Extract top-level ProcedureDecl and QueueDecl instances
+      if (config instanceof OrSequence) {
+          for (Directive d : ((OrSequence) config).getDirectives()) {
+              if (d instanceof ProcedureDecl) {
+                  procedures.add((ProcedureDecl) d);
+              } else if (d instanceof QueueDecl) {
+                  queueDecls.add((QueueDecl) d);
+              }
+          }
+      } else if (config instanceof AndSequence) {
+          for (Directive d : ((AndSequence) config).getDirectives()) {
+              if (d instanceof ProcedureDecl) {
+                  procedures.add((ProcedureDecl) d);
+              } else if (d instanceof QueueDecl) {
+                  queueDecls.add((QueueDecl) d);
+              }
+          }
+      } else if (config instanceof ProcedureDecl) {
+          procedures.add((ProcedureDecl) config);
+      } else if (config instanceof QueueDecl) {
+          queueDecls.add((QueueDecl) config);
+      }
     }
 
     boolean dry = false;
@@ -107,21 +138,23 @@ public class App
     if (hookfile.isDirectory()) {
       for (File file : hookfile.listFiles()) {
         if (FilenameUtils.getExtension(file.getName()).isEmpty()) {
-          process(file, config, dry);
+          process(file, config, procedures, queueDecls, dry);
         }
       }
     } else {
-      int code = process(hookfile, config, dry) ? 0 : 1;
+      int code = process(hookfile, config, procedures, queueDecls, dry) ? 0 : 1;
       System.exit(code);
       return;
     }
 
   }
 
-  private static boolean process(File file, Directive config, boolean dry) {
+  private static boolean process(File file, Directive config, List<ProcedureDecl> procedures, List<QueueDecl> queueDecls, boolean dry) {
     WebHook webhook = parseWebHook(file);
     if (webhook != null) {
       webhook.context.setRules(config);
+      webhook.context.setProcedures(procedures);
+      webhook.context.setQueueDecls(queueDecls);
       try {
         config.apply(webhook);
       } catch (ExitActionException e) {
