@@ -16,7 +16,9 @@
 package ar.com.rjgodoy.webhook_router;
 
 import ar.com.rjgodoy.webhook_router.filter.Directive;
+import ar.com.rjgodoy.webhook_router.filter.OrSequence;
 import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
+import ar.com.rjgodoy.webhook_router.filter.QueueDecl;
 import ar.com.rjgodoy.webhook_router.filter.Result;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,9 +52,11 @@ public class Context {
   private boolean dry;
 
   private List<ProcedureDecl> procedures = new ArrayList<>();
+  private List<QueueDecl> queueDecls = new ArrayList<>();
 
   Context() {
     parent = null;
+    // procedures are intentionally left null here
   }
 
   Context(Context parent) {
@@ -61,10 +65,20 @@ public class Context {
     consumed = parent.consumed;
     rules = parent.rules;
     procedures = parent.procedures;
+    queueDecls = parent.queueDecls;
   }
 
   void setRules(Directive rules) {
     this.rules = Objects.requireNonNull(rules);
+
+    this.queueDecls = new ArrayList<>();
+    if (rules instanceof OrSequence) {
+        for (Directive d : ((OrSequence) rules).getDirectives()) {
+            if (d instanceof QueueDecl) {
+                this.queueDecls.add((QueueDecl) d);
+            }
+        }
+    }
   }
 
   public void consume() {

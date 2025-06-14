@@ -169,7 +169,7 @@ public class App
         System.err.println("(" + file + ") Failed to parse payload: " + e.getMessage());
         return null;
       }
-      return new WebHook(requestUri, headers, jsonObject);
+      return new WebHook(requestUri, headers, jsonObject, file);
     } else {
       System.err.println("(" + file + ") Content type not allowed: contentType");
       return null;
