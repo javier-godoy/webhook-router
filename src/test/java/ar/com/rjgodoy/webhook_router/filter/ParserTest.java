@@ -726,6 +726,78 @@ public class ParserTest {
             ),
             new ElseClause(new DropAction()))));
   }
+/*
+   @Test
+   public void testEnqueueActionSimple() {
+       String script = "ENQUEUE myTestQueue";
+       Directive result = parser(script).parseConfiguration();
+       assertTrue(result instanceof EnqueueAction);
+       EnqueueAction enqueueAction = (EnqueueAction) result;
+       assertEquals("myTestQueue", enqueueAction.getQueueName());
+   }
 
+   @Test
+   public void testEnqueueActionMissingName() {
+       String script = "ENQUEUE";
+       Iterator<String> iterator = script.lines().iterator();
+       RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+           parser(iterator).parseConfiguration();
+       });
+       // token() will throw "Expected token; at line 1"
+       // This will be caught by scanAction(), then chained by parseOrSequence(), then by parseConfiguration()
+       // Each chain (if line numbers differ) prepends "at line X".
+       // Assuming all start processing at line 1 for this single line script:
+       assertEquals("Expected token; at line 1", e.getMessage());
+       assertNull(e.getCause());
+   }
+
+   @Test
+   public void testEnqueueActionWithExtraTokens() {
+       String script = "ENQUEUE myQueue extraToken";
+       Iterator<String> iterator = script.lines().iterator();
+       RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+           parser(iterator).parseConfiguration();
+       });
+       // assertEndOfLine() throws RPE(1, "Expected end of line") -> msg "Expected end of line; at line 1"
+       // Chained...
+       assertEquals("Expected end of line; at line 1", e.getMessage());
+       assertNull(e.getCause());
+   }
+*/
+
+  @Test
+  public void testQueueDeclaration() {
+    String script = "QUEUE my_queue { DROP\n }";
+    Directive result = parser(script).scanQueueDecl();
+
+    assertThat(result, isA(QueueDecl.class.asSubclass(Directive.class)));
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertThat(queueDecl.getName(), is("my_queue"));
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclarationMissingBody() {
+    String script = "QUEUE my_queue";
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).parseConfiguration();
+    });
+    assertThat(e.getMessage(), containsString("Expected queue body; at line 1"));
+    assertThat(e.getCause(), is(nullValue()));
+  }
+
+  @Test
+  public void testQueueDeclarationEmptyBody() {
+    String script = "QUEUE my_queue {}";
+    Directive result = parser(script).scanQueueDecl();
+
+    assertThat(result, isA(QueueDecl.class.asSubclass(Directive.class)));
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertThat(queueDecl.getName(), is("my_queue"));
+    assertThat(queueDecl.getBody(), isA(OrSequence.class.asSubclass(Directive.class)));
+    OrSequence queueBody = (OrSequence) queueDecl.getBody();
+    assertThat(queueBody.getDirectives(), hasSize(0));
+  }
 }
-

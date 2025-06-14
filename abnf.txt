@@ -1,6 +1,6 @@
-# configuration = or-sequence 
+# configuration = *(or-sequence / queue-decl) 
 #
-# or-sequence  = (and-sequence/procedure-decl) *(1*CRLF (otherwise-directive / and-sequence / procedure-decl))
+# or-sequence  = (and-sequence / procedure-decl) *(1*CRLF (otherwise-directive / and-sequence / procedure-decl))
 # and-sequence = *(directive CRLF)
 #
 # directive = ["NOT"] predicate / action / group-directive / or-directive / nor-directive / case-directive
@@ -20,6 +20,7 @@
 # action = "CALL" <name>
 #        / "DROP"
 #        / "DRY"
+#        / "ENQUEUE" <name>
 #        / "EXIT"
 #        / "LOG" <macro-string> ["&&"]; double ampersand in macro-string must be escaped
 #        / <http-method> <macro-token> ["INTO" <json-path>] ["WITH" group-directive]; token must expand to an absolute-URI
@@ -34,7 +35,13 @@
 #
 # http-method         = "POST" / "GET" / "DELETE"
 # 
-# procedure-decl      = "PROCEDURE" <name> group-directive
+# procedure-decl     = "PROCEDURE" <name> group-directive
+# queue-decl         = "QUEUE" <name> [retention-policy] group-directive
+#
+# retention-policies = "RETENTION" retention-policy *(("AND" / "OR") retention-policy)
+# retention-policy   =  retention-tasks / retention-days 
+# retention-days     = 1*DIGIT "DAYS"
+# retention-tasks    = "LAST" 1*DIGIT
 #
 # or-directive        = "or" "{" 1*(directive CRLF) "}"
 # nor-directive       = "nor" "{" 1*(directive CRLF) "}"

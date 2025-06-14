@@ -15,23 +15,33 @@
  */
 package ar.com.rjgodoy.webhook_router.filter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import ar.com.rjgodoy.webhook_router.WebHook;
-import java.util.List;
-import java.util.Map;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Test;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NonNull;
 
-public class MacroExpansionTest {
+@Getter
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class QueueDecl implements Directive {
 
-  @Test
-  public void test() {
-    JSONObject payload = new JSONObject();
-    payload.put("a", new JSONObject(Map.of("b", new JSONObject(Map.of("c", 1)))));
-    WebHook w = new WebHook("", List.of(), payload, null, null);
+  @NonNull
+  private final String name;
 
-    assertEquals("1", new MacroExpansion("a.b.c").eval(w));
+  @NonNull
+  private final Directive body;
+
+  public QueueDecl(QueueDecl other, Directive body) {
+    this(other.name, body);
+  }
+
+  @Override
+  public Result apply(WebHook webhook) {
+    return Result.NULL;
+  }
+
+  public Result call(WebHook webhook) {
+    return body == null ? Result.NULL : body.apply(webhook);
   }
 
 }
-

@@ -15,13 +15,13 @@
  */
 package ar.com.rjgodoy.webhook_router;
 
+import ar.com.rjgodoy.webhook_router.filter.Configuration;
 import ar.com.rjgodoy.webhook_router.filter.Directive;
 import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
 import ar.com.rjgodoy.webhook_router.filter.Result;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -41,7 +41,7 @@ public class Context {
   private final Set<String> secrets = new HashSet<>();
 
   @Getter
-  private Directive rules;
+  private Configuration rules;
 
   @Getter
   private boolean consumed;
@@ -50,21 +50,21 @@ public class Context {
   private boolean dry;
 
   private List<ProcedureDecl> procedures = new ArrayList<>();
+  private final SpoolManager spool;
 
-  Context() {
+  Context(SpoolManager spool, Configuration rules) {
     parent = null;
+    this.spool = spool;
+    this.rules = rules;
   }
 
   Context(Context parent) {
     this.parent = parent;
+    spool = parent.spool;
     dry = parent.dry;
     consumed = parent.consumed;
     rules = parent.rules;
     procedures = parent.procedures;
-  }
-
-  void setRules(Directive rules) {
-    this.rules = Objects.requireNonNull(rules);
   }
 
   public void consume() {
@@ -127,7 +127,7 @@ public class Context {
       return false;
     }
 
-    webhook.context.getRules().apply(webhook);
+    webhook.context.getRules().call(Configuration.DEFAULT_QUEUE, webhook);
     return true;
   }
 
