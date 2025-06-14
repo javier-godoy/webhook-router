@@ -34,6 +34,7 @@ final class OrSequence extends LogicalDirective {
   @Override
   public Result apply(WebHook webhook) {
     procedures().forEach(webhook.context::declare);
+    queues().forEach(webhook.context::declare);
 
     Result result = Result.NULL;
     try (var scope = webhook.context.newLocalScope()) {
@@ -52,6 +53,11 @@ final class OrSequence extends LogicalDirective {
   private Stream<ProcedureDecl> procedures() {
     return directives.stream().filter(ProcedureDecl.class::isInstance)
         .map(ProcedureDecl.class::cast);
+  }
+
+  private Stream<QueueDecl> queues() {
+    return directives.stream().filter(QueueDecl.class::isInstance)
+          .map(QueueDecl.class::cast);
   }
 
   @Override
