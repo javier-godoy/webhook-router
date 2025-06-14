@@ -192,6 +192,30 @@ PROCEDURE foo {
 }
 ```
 
+#### QUEUE declaration
+
+A `QUEUE` declaration defines a named queue that can be used to store webhooks for asynchronous processing. The body of the `QUEUE` directive specifies the actions to be performed on the webhooks dequeued from this queue.
+
+Syntax:
+```
+QUEUE <queue-name> [RETENTION (<number_of_tasks> | <number_of_days> DAYS | <number_of_tasks> <number_of_days> DAYS)] {
+  # Actions to perform on webhooks from this queue
+  LOG Processing webhook from ${queue-name}
+}
+```
+
+The optional `RETENTION` clause specifies the policy for removing already processed webhooks from the queue's history.
+-   `<number_of_tasks>`: If specified, the history will not retain more than this number of processed tasks. If new tasks are processed and the count exceeds this limit, the oldest processed tasks are removed.
+-   `<number_of_days> DAYS`: If specified, processed tasks older than this number of days are removed from the history.
+-   If both `<number_of_tasks>` and `<number_of_days> DAYS` are specified, both conditions apply independently. A processed task is removed if its age exceeds `<number_of_days> DAYS`, OR if it needs to be removed because the total number of tasks in history would otherwise exceed `<number_of_tasks>` (oldest are removed first). Thus, a task is retained only if it meets both criteria: it is not older than the specified days AND it is recent enough to be within the task count limit.
+
+For example:
+- `QUEUE my_queue RETENTION 1000`: Keeps the history of the last 1000 processed tasks. If more tasks are processed, the oldest ones are removed.
+- `QUEUE my_queue RETENTION 7 DAYS`: Keeps the history of processed tasks for the last 7 days. Tasks older than 7 days are removed.
+- `QUEUE my_queue RETENTION 500 30 DAYS`: Processed tasks older than 30 days are removed. Additionally, if the total number of tasks in the history exceeds 500, the oldest tasks are removed to keep the count at 500. A task is only kept in the history if it is no older than 30 days AND it is among the 500 most recent tasks (if the history size were to exceed 500).
+
+The body of the `QUEUE` directive specifies the actions to be performed on the webhooks dequeued from this queue for active processing.
+
 #### CALL action
 
 The `CALL` action executes a named procedure and returns its result. 
@@ -229,6 +253,15 @@ Note that `DROP` does _not_ terminates the processing chain for that particular 
 
 This action does not return a logical value.
 
+
+#### ENQUEUE action
+
+The `ENQUEUE` action places the current webhook into a named queue for asynchronous processing. This queue must be defined using a `QUEUE` declaration. The action returns `true` if the webhook was successfully enqueued, and `false` otherwise.
+
+Syntax:
+```
+ENQUEUE <queue-name>
+```
 
 #### EXIT action
 
@@ -316,6 +349,28 @@ POST http://jenkins:8080/git/notifyCommit?url=${repository.ssh_url}
 
 When using the special form, a double ampersand must be escaped (`\&&`) in the macro-string part.
 
+#### QUEUE and ENQUEUE Example
+
+This example demonstrates how to define a queue and enqueue webhooks to it based on a condition.
+
+```
+# Define a queue for processing important jobs
+QUEUE my-processing-queue {
+  LOG [${X-GitHub-Delivery}] Processing high-priority job from ${repository.full_name} via queue.
+  POST http://internal-processor/notifyJob
+  # Further actions for items from this queue can be defined here.
+}
+
+# Main processing logic
+X-Priority-Job: true
+ENQUEUE my-processing-queue  # Send to the queue if X-Priority-Job is true
+
+# Fallback for non-priority jobs or if the above condition is false
+otherwise {
+  LOG [${X-GitHub-Delivery}] Handling ${X-GitHub-Event} from ${repository.full_name} directly.
+  POST http://default-handler/webhook
+}
+```
 
 ## Webhook format
 

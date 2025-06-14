@@ -20,7 +20,6 @@ import ar.com.rjgodoy.webhook_router.filter.CaseDirective.ElseClause;
 import ar.com.rjgodoy.webhook_router.filter.CaseDirective.WhenClause;
 import ar.com.rjgodoy.webhook_router.filter.HttpMethodAction.HttpMethodActionBuilder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -143,23 +142,27 @@ public class DirectiveParser {
     }
   }
 
-  public static Directive dry(@NonNull Directive rules) {
-    return new AndSequence(Arrays.asList(new DryAction(), rules));
+  public static void dry(@NonNull Configuration config) {
+    config.makeDry();
   }
 
-  public Directive parseConfiguration() {
-    // configuration = or-sequence
-    Directive configuration = parseOrSequence();
+  public Configuration parseConfiguration() {
+    // configuration = * (or-sequence / queue-decl)
+    Directive configuration = parseOrSequence(true);
     if (!eof) {
       throw new RuntimeParserException(lineNumber, "Expected end of file");
     }
     if (configuration == null) {
       throw new RuntimeParserException(lineNumber, "Expected directive");
     }
-    return configuration;
+    return new Configuration((OrSequence) configuration);
   }
 
   Directive parseOrSequence() {
+    return parseOrSequence(false);
+  }
+
+  private Directive parseOrSequence(boolean topLevel) {
     int lineNumber = this.lineNumber;
     try {
       // or-sequence = and-sequence/procedure-decl *(1*CRLF (otherwise-directive / and-sequence /
@@ -188,6 +191,12 @@ public class DirectiveParser {
           continue;
         }
 
+        Directive queueDecl = topLevel ? scanQueueDecl() : null;
+        if (queueDecl != null) {
+          directives.add(queueDecl);
+          continue;
+        }
+
         Directive and = parseAndSequence();
         if (and == null) {
           break;
@@ -195,19 +204,23 @@ public class DirectiveParser {
         directives.add(and);
       }
 
-      switch (directives.size()) {
-        case 0:
-          return null;
-        case 1:
-          return directives.get(0);
-        default:
-          return new OrSequence(directives);
-      }
+      return topLevel && !directives.isEmpty() ? new OrSequence(directives) : wrap(directives);
+
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
     }
   }
 
+  static Directive wrap(List<Directive> directives) {
+    switch (directives.size()) {
+      case 0:
+        return null;
+      case 1:
+        return directives.get(0);
+      default:
+        return new OrSequence(directives);
+    }
+  }
 
   Directive scanOrDirective() {
     return scanOrNorDirective("or", dd -> dd.size() == 1 ? dd.get(0) : new OrDirective(dd));
@@ -381,6 +394,23 @@ public class DirectiveParser {
     }
   }
 
+  Directive scanQueueDecl() {
+    // queue-decl = "QUEUE" <name> group-directive
+    try {
+      if (skip("QUEUE")) {
+        String name = token();
+        Directive body = scanGroup(true);
+        if (body == null) {
+          throw new RuntimeParserException(lineNumber, "Expected queue body");
+        }
+        return new QueueDecl(name, body);
+      }
+      return null;
+    } catch (RuntimeParserException e) {
+      throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
+
   MacroString parseMacroString() {
     return parseMacroString(next());
   }
@@ -542,6 +572,11 @@ public class DirectiveParser {
           skip(line);
           // end of line allowed
           return new DryAction();
+        case "ENQUEUE":
+          skip(line);
+          String queueName = token();
+          assertEndOfLine();
+          return new EnqueueAction(queueName);
         case "FOR":
           skip("FOR");
           return parseForAction();

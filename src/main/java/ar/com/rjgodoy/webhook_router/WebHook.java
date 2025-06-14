@@ -15,6 +15,7 @@
  */
 package ar.com.rjgodoy.webhook_router;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,27 +26,24 @@ import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 
 @Getter
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 public class WebHook {
 
   private final String requestUri;
   private final List<Header> headers;
   private final JSONObject payload;
+  private final File file;
 
   public final Context context;
-
-  public WebHook(String requestUri, List<Header> headers, JSONObject payload) {
-    this(requestUri, new ArrayList<>(headers), payload, new Context());
-  }
 
   public WebHook(WebHook webhook) {
     this(webhook.requestUri,
         webhook.headers.stream().map(h -> new Header(h)).collect(Collectors.toList()),
-        new JSONObject(webhook.payload.toString()), new Context(webhook.context));
+        new JSONObject(webhook.payload.toString()), webhook.file, new Context(webhook.context));
   }
 
   public WebHook(Context context) {
-    this(null, new ArrayList<>(), new JSONObject(), new Context(context));
+    this(null, new ArrayList<>(), new JSONObject(), null, new Context(context));
   }
 
   public Optional<String> getHeader(String name) {
@@ -84,6 +82,10 @@ public class WebHook {
       default:
         return getHeader(expression).orElse(null);
     }
+  }
+
+  public void enqueue(String targetQueueName) {
+    context.fanOut(file.getParentFile().getName(), file.getName(), targetQueueName);
   }
 
 }

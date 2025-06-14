@@ -15,13 +15,14 @@
  */
 package ar.com.rjgodoy.webhook_router;
 
-import ar.com.rjgodoy.webhook_router.filter.Directive;
+import ar.com.rjgodoy.webhook_router.filter.Configuration;
 import ar.com.rjgodoy.webhook_router.filter.DirectiveParser;
 import ar.com.rjgodoy.webhook_router.filter.ExitActionException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -78,7 +79,7 @@ public class App
       return;
     }
 
-    Directive config = null;
+    Configuration config = null;
     if (command.hasOption("config")) {
       config = parseDirectives(command.getOptionValue("config"));
     }
@@ -86,7 +87,7 @@ public class App
     boolean dry = false;
     if (command.hasOption("dry")) {
       dry = true;
-      config = DirectiveParser.dry(config);
+      DirectiveParser.dry(config);
     }
 
     if (config == null) {
@@ -97,33 +98,37 @@ public class App
       return;
     }
 
-    if (!command.hasOption("hook")) {
+    if (!command.hasOption("spool")) {
       System.out.println(config);
       return;
     }
 
-    File hookfile = new File(command.getOptionValue("hook"));
+    File directory = new File(command.getOptionValue("spool"));
+    SpoolManager spool = new SpoolManager(directory);
 
-    if (hookfile.isDirectory()) {
-      for (File file : hookfile.listFiles()) {
+    for (File file : directory.listFiles()) {
         if (FilenameUtils.getExtension(file.getName()).isEmpty()) {
-          process(file, config, dry);
+          spool.enqueue(file);
         }
+    }
+
+    List<String> index = spool.readIndex();
+
+    Context context = new Context(spool, config);
+    for (String queue : spool.getAllQueues()) {
+      for (File file : SpoolManager.sort(spool.discoverPending(queue), index)) {
+        process(file, queue, context, dry);
       }
-    } else {
-      int code = process(hookfile, config, dry) ? 0 : 1;
-      System.exit(code);
-      return;
     }
 
   }
 
-  private static boolean process(File file, Directive config, boolean dry) {
-    WebHook webhook = parseWebHook(file);
+
+  private static boolean process(File file, String queueName, Context context, boolean dry) {
+    WebHook webhook = parseWebHook(context, file);
     if (webhook != null) {
-      webhook.context.setRules(config);
       try {
-        config.apply(webhook);
+        context.getRules().call(queueName, webhook);
       } catch (ExitActionException e) {
         // done
       }
@@ -136,7 +141,7 @@ public class App
     }
   }
 
-  private static WebHook parseWebHook(File file) {
+  private static WebHook parseWebHook(Context context, File file) {
     byte data[];
     try {
       data = FileUtils.readFileToByteArray(file);
@@ -169,7 +174,8 @@ public class App
         System.err.println("(" + file + ") Failed to parse payload: " + e.getMessage());
         return null;
       }
-      return new WebHook(requestUri, headers, jsonObject);
+      headers = new ArrayList<>(headers);
+      return new WebHook(requestUri, headers, jsonObject, file, new Context(context));
     } else {
       System.err.println("(" + file + ") Content type not allowed: contentType");
       return null;
@@ -177,9 +183,8 @@ public class App
 
   }
 
-  private static Directive parseDirectives(String path) throws IOException {
+  private static Configuration parseDirectives(String path) throws IOException {
     List<String> lines = FileUtils.readLines(new File(path), Charset.defaultCharset());
-
     return new DirectiveParser(lines.iterator()).parseConfiguration();
   }
 }
