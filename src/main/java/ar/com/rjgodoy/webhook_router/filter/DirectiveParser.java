@@ -188,6 +188,12 @@ public class DirectiveParser {
           continue;
         }
 
+        Directive queueDecl = scanQueueDecl();
+        if (queueDecl != null) {
+          directives.add(queueDecl);
+          continue;
+        }
+
         Directive and = parseAndSequence();
         if (and == null) {
           break;
@@ -381,6 +387,23 @@ public class DirectiveParser {
     }
   }
 
+  Directive scanQueueDecl() {
+    // queue-decl = "QUEUE" <name> group-directive
+    try {
+      if (skip("QUEUE")) {
+        String name = token();
+        Directive body = scanGroup(true);
+        if (body == null) {
+          throw new RuntimeParserException(lineNumber, "Expected queue body");
+        }
+        return new QueueDecl(name, body);
+      }
+      return null;
+    } catch (RuntimeParserException e) {
+      throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
+
   MacroString parseMacroString() {
     return parseMacroString(next());
   }
@@ -547,6 +570,11 @@ public class DirectiveParser {
           String queueName = token();
           assertEndOfLine();
           return new EnqueueAction(queueName);
+        case "QUEUE":
+          skip(line);
+          String queueNameToken = token();
+          assertEndOfLine();
+          return new QueueAction(queueNameToken);
         case "FOR":
           skip("FOR");
           return parseForAction();
