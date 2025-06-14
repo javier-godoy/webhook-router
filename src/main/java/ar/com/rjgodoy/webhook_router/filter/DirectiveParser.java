@@ -542,6 +542,11 @@ public class DirectiveParser {
           skip(line);
           // end of line allowed
           return new DryAction();
+        case "ENQUEUE":
+          skip(line);
+          String queueName = token();
+          assertEndOfLine();
+          return new EnqueueAction(queueName);
         case "FOR":
           skip("FOR");
           return parseForAction();
