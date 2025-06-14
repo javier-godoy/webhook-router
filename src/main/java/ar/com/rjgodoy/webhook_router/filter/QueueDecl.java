@@ -36,7 +36,13 @@ public class QueueDecl implements Directive {
     @Override
     public Result apply(WebHook webhook) {
         // TODO: Implement queue declaration logic using queueName
-        // TODO: Apply the body directive
+        // This apply method is for when QueueDecl itself is encountered in a directive sequence.
+        // For now, declaring a queue doesn't produce a TRUE/FALSE result itself.
         return Result.NULL;
+    }
+
+    public Result call(WebHook webhook) {
+        // This method is for executing the body of the queue.
+        return body.apply(webhook);
     }
 }

@@ -15,11 +15,10 @@
  */
 package ar.com.rjgodoy.webhook_router;
 
-import ar.com.rjgodoy.webhook_router.filter.AndSequence;
 import ar.com.rjgodoy.webhook_router.filter.Directive;
-import ar.com.rjgodoy.webhook_router.filter.OrSequence;
+import ar.com.rjgodoy.webhook_router.filter.OrSequence; // Added
 import ar.com.rjgodoy.webhook_router.filter.ProcedureDecl;
-import ar.com.rjgodoy.webhook_router.filter.QueueDecl;
+import ar.com.rjgodoy.webhook_router.filter.QueueDecl; // Added
 import ar.com.rjgodoy.webhook_router.filter.Result;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -52,29 +51,40 @@ public class Context {
   @Getter
   private boolean dry;
 
-  private List<ProcedureDecl> procedures; // Will be null by default
-  private List<QueueDecl> queueDecls;   // Will be null by default
+  private List<ProcedureDecl> procedures = new ArrayList<>();
+  private List<QueueDecl> queueDecls = new ArrayList<>(); // Added field with initializer
 
   Context() {
     parent = null;
-    // procedures and queueDecls are intentionally left null here
+    // procedures and queueDecls initialized at field declaration
   }
 
   Context(Context parent) {
     this.parent = parent;
-    dry = parent.dry;
-    consumed = parent.consumed;
-    rules = parent.rules;
-    // Shallow copy from parent. If parent's lists are null, child's will be too.
-    // If parent's lists are set, child shares those instances until its own setters are called.
-    procedures = parent.procedures;
-    queueDecls = parent.queueDecls;
+    this.dry = parent.dry;
+    this.consumed = parent.consumed;
+    this.rules = parent.rules;
+    // Deep copy of lists
+    this.procedures = new ArrayList<>(parent.procedures);
+    this.queueDecls = new ArrayList<>(parent.queueDecls);
   }
 
   void setRules(Directive rules) {
     this.rules = Objects.requireNonNull(rules);
-    // setRules no longer initializes or populates procedures or queueDecls.
-    // This must be done via explicit calls to setProcedures() and setQueueDecls().
+
+    // For queueDecls: initialize and populate
+    this.queueDecls = new ArrayList<>();
+    if (rules instanceof OrSequence) {
+        for (Directive d : ((OrSequence) rules).getDirectives()) {
+            if (d instanceof QueueDecl) {
+                this.queueDecls.add((QueueDecl) d);
+            }
+            // Note: ProcedureDecl is NOT extracted from rules here.
+        }
+    } else if (rules instanceof QueueDecl) {
+        this.queueDecls.add((QueueDecl) rules);
+    }
+    // procedures list is NOT modified by setRules. It's managed by field init + declare/undeclare.
   }
 
   public void consume() {
@@ -155,31 +165,15 @@ public class Context {
     return stream;
   }
 
-  public List<ProcedureDecl> getProcedures() {
-    return this.procedures;
-  }
-
-  public void setProcedures(List<ProcedureDecl> procedures) {
-    this.procedures = Objects.requireNonNull(procedures);
-  }
-
   public void declare(ProcedureDecl proc) {
-    if (this.procedures == null) {
-      this.procedures = new ArrayList<>();
-    }
-    this.procedures.add(proc);
+    procedures.add(proc);
   }
 
   public void undeclare(ProcedureDecl proc) {
-    if (this.procedures != null) {
-      this.procedures.remove(proc);
-    }
+    procedures.remove(proc);
   }
 
   public Optional<Result> call(WebHook webhook, String procedureName) {
-    if (this.procedures == null) {
-      return Optional.empty();
-    }
     for (int i = procedures.size(); i-- > 0;) {
       ProcedureDecl proc = procedures.get(i);
       if (proc.getName().equals(procedureName)) {
@@ -189,11 +183,4 @@ public class Context {
     return Optional.empty();
   }
 
-  public List<QueueDecl> getQueueDecls() {
-    return this.queueDecls;
-  }
-
-  public void setQueueDecls(List<QueueDecl> queueDecls) {
-    this.queueDecls = Objects.requireNonNull(queueDecls);
-  }
 }
