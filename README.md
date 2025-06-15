@@ -192,6 +192,19 @@ PROCEDURE foo {
 }
 ```
 
+#### QUEUE declaration
+
+A `QUEUE` declaration defines a named queue that can be used to store webhooks for asynchronous processing. The body of the `QUEUE` directive specifies the actions to be performed on the webhooks dequeued from this queue.
+
+Syntax:
+```
+QUEUE <queue-name> {
+  # Actions to perform on webhooks from this queue
+  LOG Processing webhook from ${queue-name}
+  POST http://downstream-service/path
+}
+```
+
 #### CALL action
 
 The `CALL` action executes a named procedure and returns its result. 
@@ -228,6 +241,18 @@ The `DROP` action marks the webhook as consumed, without actually posting it any
 Note that `DROP` does _not_ terminates the processing chain for that particular webhook instance: if there are other actions in the processing chain that involve posting a message, they can still be carried out.
 
 This action does not return a logical value.
+
+
+#### ENQUEUE action
+
+The `ENQUEUE` action places the current webhook into a named queue for asynchronous processing. This queue must be defined using a `QUEUE` declaration. The action returns `true` if the webhook was successfully enqueued, and `false` otherwise.
+
+Syntax:
+```
+ENQUEUE <queue-name>
+```
+
+When a webhook is processed by an `ENQUEUE` action, it is added to the specified queue. The processing of the webhook within that queue is defined by the corresponding `QUEUE` declaration's body.
 
 
 #### EXIT action
@@ -316,6 +341,28 @@ POST http://jenkins:8080/git/notifyCommit?url=${repository.ssh_url}
 
 When using the special form, a double ampersand must be escaped (`\&&`) in the macro-string part.
 
+#### QUEUE and ENQUEUE Example
+
+This example demonstrates how to define a queue and enqueue webhooks to it based on a condition.
+
+```
+# Define a queue for processing important jobs
+QUEUE my-processing-queue {
+  LOG [${X-GitHub-Delivery}] Processing high-priority job from ${repository.full_name} via queue.
+  POST http://internal-processor/notifyJob
+  # Further actions for items from this queue can be defined here.
+}
+
+# Main processing logic
+X-Priority-Job: true
+ENQUEUE my-processing-queue  # Send to the queue if X-Priority-Job is true
+
+# Fallback for non-priority jobs or if the above condition is false
+otherwise {
+  LOG [${X-GitHub-Delivery}] Handling ${X-GitHub-Event} from ${repository.full_name} directly.
+  POST http://default-handler/webhook
+}
+```
 
 ## Webhook format
 
