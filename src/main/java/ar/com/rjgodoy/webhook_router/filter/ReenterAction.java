@@ -20,6 +20,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * @deprecated This class is deprecated and should not be used.
+ */
+@Deprecated
 @RequiredArgsConstructor
 final class ReenterAction implements Directive, HasLineNumber {
 

@@ -584,6 +584,7 @@ public class DirectiveParser {
         }
         case "REENTER": {
           // action = "REENTER" ["COPY"]
+          System.err.println("REENTER directive is deprecated and should not be used. Line: " + lineNumber);
           skip(line);
           if (next != null && skip("COPY")) {
             return new ReenterAction(lineNumber, true);
