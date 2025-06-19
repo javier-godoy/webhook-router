@@ -395,15 +395,47 @@ public class DirectiveParser {
   }
 
   Directive scanQueueDecl() {
-    // queue-decl = "QUEUE" <name> group-directive
+    // queue-decl = "QUEUE" <name> [retention-policies] group-directive
     try {
       if (skip("QUEUE")) {
         String name = token();
+
+        List<Object> retentionPolicies = scanRetentionPolicies();
+        Integer maxTasks = null;
+        Integer maxDays = null;
+        String combinatorString = null;
+
+        if (retentionPolicies != null && !retentionPolicies.isEmpty()) {
+          if (retentionPolicies.size() == 1) {
+            Object policy = retentionPolicies.get(0);
+            if (policy instanceof RetentionTask rt) {
+              maxTasks = rt.tasks();
+            } else if (policy instanceof RetentionDays rd) {
+              maxDays = rd.days();
+            }
+            // combinatorString remains null
+          } else if (retentionPolicies.size() == 3) {
+            Object policy1 = retentionPolicies.get(0);
+            combinatorString = (String) retentionPolicies.get(1); // Capture the combinator
+            Object policy2 = retentionPolicies.get(2);
+
+            if (policy1 instanceof RetentionTask rt1 && policy2 instanceof RetentionDays rd1) {
+              maxTasks = rt1.tasks();
+              maxDays = rd1.days();
+            } else if (policy1 instanceof RetentionDays rd2 && policy2 instanceof RetentionTask rt2) {
+              maxDays = rd2.days();
+              maxTasks = rt2.tasks();
+            } else {
+              throw new RuntimeParserException(lineNumber, "Invalid combination of retention policies. If two policies are specified with a combinator, one must be for tasks (LAST <n>) and one for days (<n> DAYS).");
+            }
+          }
+        }
+
         Directive body = scanGroup(true);
         if (body == null) {
           throw new RuntimeParserException(lineNumber, "Expected queue body");
         }
-        return new QueueDecl(name, body);
+        return new QueueDecl(name, maxTasks, maxDays, combinatorString, body);
       }
       return null;
     } catch (RuntimeParserException e) {
@@ -780,6 +812,90 @@ public class DirectiveParser {
       }
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
+
+  private List<Object> scanRetentionPolicies() {
+    int currentLine = this.lineNumber;
+    if (!skip("RETENTION")) {
+      return null; // Or Collections.emptyList();
+    }
+
+    List<Object> policies = new ArrayList<>();
+    Object firstPolicy = parseRetentionPolicy();
+    policies.add(firstPolicy);
+
+    // After parsing the first policy, check what follows.
+    // scan() peeks the next significant part of the input line/buffer.
+    // next variable holds the remainder of the current line being processed after a token() or skip()
+
+    String upcomingTokenPreview = scan().trim(); // Use scan() to see what's next without consuming fully like token()
+
+    if (upcomingTokenPreview.isEmpty() || upcomingTokenPreview.startsWith("{")) {
+      // Valid: End of line/directive, or start of queue body for the current queue.
+      // No more retention policies to parse.
+      return policies;
+    }
+
+    // If we are here, there are more tokens. They MUST be "AND"/"OR" followed by a second policy.
+    String combinatorToken = "";
+    // Extract the first word from upcomingTokenPreview to check for AND/OR
+    if (upcomingTokenPreview.contains(" ")) {
+        combinatorToken = upcomingTokenPreview.substring(0, upcomingTokenPreview.indexOf(' ')).toUpperCase();
+    } else {
+        combinatorToken = upcomingTokenPreview.toUpperCase();
+    }
+
+    if ("AND".equals(combinatorToken) || "OR".equals(combinatorToken)) {
+      skip(combinatorToken); // Consume "AND" or "OR"
+      policies.add(combinatorToken);
+      Object secondPolicy = parseRetentionPolicy();
+      policies.add(secondPolicy);
+
+      // After the second policy, there should be nothing, or the start of the queue body '{'
+      // Re-check 'next' which reflects what's left after the last token() in parseRetentionPolicy
+      upcomingTokenPreview = scan().trim();
+      if (!upcomingTokenPreview.isEmpty() && !upcomingTokenPreview.startsWith("{")) {
+        String unexpectedPart = upcomingTokenPreview.split("\\s")[0];
+        throw new RuntimeParserException(this.lineNumber, "Unexpected token '" + unexpectedPart + "' after second retention policy. Maximum two policies allowed.");
+      }
+    } else {
+      // The token after the first policy is not "AND", "OR".
+      // It's also not the start of the queue body "{", nor is it an empty line.
+      // This means it's an invalid token, or a second policy started without a combinator.
+      String unexpectedPart = upcomingTokenPreview.split("\\s")[0];
+      throw new RuntimeParserException(this.lineNumber, "Unexpected token '" + unexpectedPart + "' after retention policy. Expected 'AND', 'OR', or start of queue body '{'.");
+    }
+    return policies;
+  }
+
+  private Object parseRetentionPolicy() {
+    int currentLine = this.lineNumber;
+    String firstToken = token();
+
+    if ("LAST".equalsIgnoreCase(firstToken)) {
+      try {
+        int numTasks = Integer.parseInt(token());
+        // Optionally, could check for a "TASKS" keyword here if the syntax was "LAST <number> TASKS"
+        // For "LAST <number>", we assume tasks.
+        return new RetentionTask(numTasks);
+      } catch (NumberFormatException e) {
+        throw new RuntimeParserException(currentLine, "Expected number after LAST for retention policy");
+      }
+    } else {
+      try {
+        int numDays = Integer.parseInt(firstToken);
+        String daysToken = token();
+        if ("DAYS".equalsIgnoreCase(daysToken)) {
+          return new RetentionDays(numDays);
+        } else {
+          throw new RuntimeParserException(currentLine, "Expected DAYS after number for retention policy");
+        }
+      } catch (NumberFormatException e) {
+        // It wasn't a number, so it's not a "<number> DAYS" policy.
+        // This could also be an invalid token starting the policy.
+        throw new RuntimeParserException(currentLine, "Invalid retention policy syntax. Expected 'LAST <number>' or '<number> DAYS'");
+      }
     }
   }
 }

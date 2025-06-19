@@ -25,7 +25,7 @@ public class Configuration {
     List<Directive> directives =
         configuration.getDirectives().stream().filter(isQueueDecl.negate()).toList();
     if (!queues.containsKey(DEFAULT_QUEUE)) {
-      declare(new QueueDecl(DEFAULT_QUEUE, DirectiveParser.wrap(directives)));
+      declare(new QueueDecl(DEFAULT_QUEUE, null, null, null, DirectiveParser.wrap(directives))); // Added null for combinator
     } else if (!directives.isEmpty()) {
       throw new RuntimeParserException(1,
           "The definition of 'QUEUE default' requires the entire configuration to contain only queue declarations");

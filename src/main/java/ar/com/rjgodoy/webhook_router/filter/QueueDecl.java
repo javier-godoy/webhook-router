@@ -22,17 +22,30 @@ import lombok.Getter;
 import lombok.NonNull;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
+// @AllArgsConstructor(access = AccessLevel.PACKAGE) // Commenting out as we'll have explicit constructors
 public class QueueDecl implements Directive {
 
   @NonNull
   private final String name;
 
+  private final Integer maxTasksRetention;
+  private final Integer maxDaysRetention;
+  private final String retentionPolicyCombinator; // New field
+
   @NonNull
   private final Directive body;
 
+  // Updated constructor to include new fields
+  QueueDecl(@NonNull String name, Integer maxTasksRetention, Integer maxDaysRetention, String retentionPolicyCombinator, @NonNull Directive body) {
+    this.name = name;
+    this.maxTasksRetention = maxTasksRetention;
+    this.maxDaysRetention = maxDaysRetention;
+    this.retentionPolicyCombinator = retentionPolicyCombinator; // Assign new field
+    this.body = body;
+  }
+
   public QueueDecl(QueueDecl other, Directive body) {
-    this(other.name, body);
+    this(other.name, other.maxTasksRetention, other.maxDaysRetention, other.retentionPolicyCombinator, body);
   }
 
   @Override
