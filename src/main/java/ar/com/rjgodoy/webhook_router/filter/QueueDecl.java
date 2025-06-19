@@ -16,13 +16,11 @@
 package ar.com.rjgodoy.webhook_router.filter;
 
 import ar.com.rjgodoy.webhook_router.WebHook;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
+// @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class QueueDecl implements Directive {
 
   @NonNull
@@ -31,8 +29,22 @@ public class QueueDecl implements Directive {
   @NonNull
   private final Directive body;
 
+  private final RetentionTask maxTasksRetention;
+  private final RetentionDays maxDaysRetention;
+  private final String retentionPolicyCombinator;
+
+  // Updated constructor to include new fields
+  QueueDecl(@NonNull String name, RetentionTask maxTasksRetention, RetentionDays maxDaysRetention,
+      String retentionPolicyCombinator, @NonNull Directive body) {
+    this.name = name;
+    this.maxTasksRetention = maxTasksRetention;
+    this.maxDaysRetention = maxDaysRetention;
+    this.retentionPolicyCombinator = retentionPolicyCombinator; // Assign new field
+    this.body = body;
+  }
+
   public QueueDecl(QueueDecl other, Directive body) {
-    this(other.name, body);
+    this(other.name, other.maxTasksRetention, other.maxDaysRetention, other.retentionPolicyCombinator, body);
   }
 
   @Override

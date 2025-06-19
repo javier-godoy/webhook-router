@@ -22,7 +22,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals; // Added
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;   // Added
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import ar.com.rjgodoy.webhook_router.Header;
@@ -799,5 +801,178 @@ public class ParserTest {
     assertThat(queueDecl.getBody(), isA(OrSequence.class.asSubclass(Directive.class)));
     OrSequence queueBody = (OrSequence) queueDecl.getBody();
     assertThat(queueBody.getDirectives(), hasSize(0));
+  }
+
+  // Tests for Retention Policy Parsing in scanQueueDecl
+
+  @Test
+  public void testQueueDeclaration_NoRetentionPolicy() {
+    String script = "QUEUE no_retention_q { \n DROP \n }"; // Added newlines around DROP
+    Directive result = parser(script).scanQueueDecl();
+
+    assertTrue(result instanceof QueueDecl); // Changed from assertThat
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertEquals("no_retention_q", queueDecl.getName()); // Using assertEquals
+    assertNull(queueDecl.getMaxTasksRetention());
+    assertNull(queueDecl.getMaxDaysRetention());
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionLastTasks() {
+    String script = "QUEUE tasks_q RETENTION LAST 150 { \n DROP \n }"; // Added newlines
+    Directive result = parser(script).scanQueueDecl();
+
+    assertTrue(result instanceof QueueDecl); // Changed from assertThat
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertEquals("tasks_q", queueDecl.getName()); // Using assertEquals
+    assertEquals(150, queueDecl.getMaxTasksRetention());
+    assertNull(queueDecl.getMaxDaysRetention());
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionDays() {
+    String script = "QUEUE days_q RETENTION 25 DAYS { \n DROP \n }"; // Added newlines
+    Directive result = parser(script).scanQueueDecl();
+
+    assertTrue(result instanceof QueueDecl); // Changed from assertThat
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertEquals("days_q", queueDecl.getName()); // Using assertEquals
+    assertNull(queueDecl.getMaxTasksRetention());
+    assertEquals(25, queueDecl.getMaxDaysRetention());
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionTasksAndDays_TasksFirst() {
+    String script = "QUEUE both_q RETENTION LAST 10 AND 5 DAYS { \n DROP \n }"; // Added newlines
+    Directive result = parser(script).scanQueueDecl();
+
+    assertTrue(result instanceof QueueDecl); // Changed from assertThat
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertEquals("both_q", queueDecl.getName()); // Using assertEquals
+    assertEquals(10, queueDecl.getMaxTasksRetention());
+    assertEquals(5, queueDecl.getMaxDaysRetention());
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionDaysAndTasks_DaysFirst_OR() {
+    String script = "QUEUE other_both_q RETENTION 20 DAYS OR LAST 200 { \n DROP \n }"; // Added newlines
+    Directive result = parser(script).scanQueueDecl();
+
+    assertTrue(result instanceof QueueDecl); // Changed from assertThat
+    QueueDecl queueDecl = (QueueDecl) result;
+
+    assertEquals("other_both_q", queueDecl.getName()); // Using assertEquals
+    assertEquals(200, queueDecl.getMaxTasksRetention());
+    assertEquals(20, queueDecl.getMaxDaysRetention());
+    assertThat(queueDecl.getBody(), isADropAction());
+  }
+
+  @Test
+  public void testQueueDeclaration_InvalidRetentionSyntax_WrongKeyword() {
+    String script = "QUEUE invalid_q RETENTION WRONG POLICY { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Invalid retention policy syntax. Expected 'LAST <number>' or '<number> DAYS'"));
+  }
+
+  @Test
+  public void testQueueDeclaration_InvalidRetentionSyntax_LAST_NAN() {
+    String script = "QUEUE invalid_q RETENTION LAST ABC { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Expected number after LAST for retention policy"));
+  }
+
+  @Test
+  public void testQueueDeclaration_InvalidRetentionSyntax_DAYS_NAN() {
+    String script = "QUEUE invalid_q RETENTION ABC DAYS { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Invalid retention policy syntax. Expected 'LAST <number>' or '<number> DAYS'"));
+  }
+
+  @Test
+  public void testQueueDeclaration_InvalidRetentionSyntax_MissingDAYS() {
+    String script = "QUEUE invalid_q RETENTION 123 NUMBER { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Expected DAYS after number for retention policy"));
+  }
+
+  @Test
+  public void testQueueDeclaration_TooManyPolicies() {
+    String script = "QUEUE too_many_q RETENTION LAST 10 AND 5 DAYS OR LAST 20 { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Unexpected token 'OR' after second retention policy. Maximum two policies allowed."));
+  }
+
+  @Test
+  public void testQueueDeclaration_InvalidCombinator() {
+    String script = "QUEUE invalid_comb_q RETENTION LAST 10 XOR 5 DAYS { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Expected queue body"));
+  }
+
+  @Test
+  public void testQueueDeclaration_TwoPoliciesSameType_Tasks() {
+    String script = "QUEUE same_type_tasks_q RETENTION LAST 10 AND LAST 20 { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    // This check is performed in scanQueueDecl after scanRetentionPolicies returns.
+    assertThat(e.getMessage(), containsString("Invalid combination of retention policies. If two policies are specified with a combinator, one must be for tasks (LAST <n>) and one for days (<n> DAYS)."));
+  }
+
+  @Test
+  public void testQueueDeclaration_TwoPoliciesSameType_Days() {
+    String script = "QUEUE same_type_days_q RETENTION 5 DAYS OR 10 DAYS { \n DROP \n }"; // Added newlines
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Invalid combination of retention policies. If two policies are specified with a combinator, one must be for tasks (LAST <n>) and one for days (<n> DAYS)."));
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionPolicyNotClosed() {
+    String script = "QUEUE q RETENTION LAST 10 \n DROP \n"; // Missing { } for queue body, added newlines for DROP
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+        parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Unexpected token 'DROP' after retention policy. Expected 'AND', 'OR', or start of queue body '{'."));
+  }
+
+  @Test
+  public void testQueueDeclaration_RetentionPolicyLastTokenIsQueue() {
+    String script = "QUEUE q1 RETENTION LAST 10 QUEUE q2 {}";
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+        parser(script).scanQueueDecl();
+    });
+    // The new stricter scanRetentionPolicies catches this earlier.
+    assertThat(e.getMessage(), containsString("Unexpected token 'QUEUE' after retention policy. Expected 'AND', 'OR', or start of queue body '{'."));
+  }
+
+  @Test
+  public void testQueueDeclaration_MissingCombinator() {
+    String script = "QUEUE missing_comb_q RETENTION LAST 10 5 DAYS { \n DROP \n }";
+    RuntimeParserException e = assertThrows(RuntimeParserException.class, () -> {
+      parser(script).scanQueueDecl();
+    });
+    assertThat(e.getMessage(), containsString("Unexpected token '5' after retention policy. Expected 'AND', 'OR', or start of queue body '{'."));
   }
 }

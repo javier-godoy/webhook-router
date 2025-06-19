@@ -395,15 +395,46 @@ public class DirectiveParser {
   }
 
   Directive scanQueueDecl() {
-    // queue-decl = "QUEUE" <name> group-directive
+    // queue-decl = "QUEUE" <name> [retention-policies] group-directive
     try {
       if (skip("QUEUE")) {
         String name = token();
+
+        List<Object> retentionPolicies = scanRetentionPolicies();
+        RetentionTask maxTasks = null;
+        RetentionDays maxDays = null;
+        String combinatorString = null;
+
+        if (retentionPolicies != null && !retentionPolicies.isEmpty()) {
+          if (retentionPolicies.size() == 1) {
+            Object policy = retentionPolicies.get(0);
+            if (policy instanceof RetentionTask rt) {
+              maxTasks = rt;
+            } else if (policy instanceof RetentionDays rd) {
+              maxDays = rd;
+            }
+          } else if (retentionPolicies.size() == 3) {
+            Object policy1 = retentionPolicies.get(0);
+            combinatorString = (String) retentionPolicies.get(1);
+            Object policy2 = retentionPolicies.get(2);
+
+            if (policy1 instanceof RetentionTask rt1 && policy2 instanceof RetentionDays rd1) {
+              maxTasks = rt1;
+              maxDays = rd1;
+            } else if (policy1 instanceof RetentionDays rd2 && policy2 instanceof RetentionTask rt2) {
+              maxDays = rd2;
+              maxTasks = rt2;
+            } else {
+              throw new RuntimeParserException(lineNumber, "Invalid combination of retention policies. If two policies are specified with a combinator, one must be for tasks (LAST <n>) and one for days (<n> DAYS).");
+            }
+          }
+        }
+
         Directive body = scanGroup(true);
         if (body == null) {
           throw new RuntimeParserException(lineNumber, "Expected queue body");
         }
-        return new QueueDecl(name, body);
+        return new QueueDecl(name, maxTasks, maxDays, combinatorString, body);
       }
       return null;
     } catch (RuntimeParserException e) {
@@ -780,6 +811,51 @@ public class DirectiveParser {
       }
     } catch (RuntimeParserException e) {
       throw RuntimeParserException.chain(lineNumber, e);
+    }
+  }
+
+  private List<Object> scanRetentionPolicies() {
+    if (!skip("RETENTION")) {
+      return null;
+    }
+
+    List<Object> policies = new ArrayList<>();
+    policies.add(parseRetentionPolicy());
+
+    String combinator = null;
+    if (skip("AND")) {
+      combinator = "AND";
+    } else if (skip("OR")) {
+      combinator = "OR";
+    } else {
+      return policies;
+    }
+
+    policies.add(parseRetentionPolicy());
+    return policies;
+  }
+
+  private Object parseRetentionPolicy() {
+    int currentLine = lineNumber;
+
+    if (skip("LAST")) {
+      try {
+        int numTasks = Integer.parseInt(token());
+        return new RetentionTask(numTasks);
+      } catch (NumberFormatException e) {
+        throw new RuntimeParserException(currentLine, "Expected number after LAST for retention policy");
+      }
+    } else {
+      try {
+        int numDays = Integer.parseInt(token());
+        if (skip("DAYS")) {
+          return new RetentionDays(numDays);
+        } else {
+          throw new RuntimeParserException(currentLine, "Expected DAYS after number for retention policy");
+        }
+      } catch (NumberFormatException e) {
+        throw new RuntimeParserException(currentLine, "Invalid retention policy syntax. Expected 'LAST <number>' or '<number> DAYS'");
+      }
     }
   }
 }
